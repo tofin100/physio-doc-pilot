@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Physio Doc Co-Pilot – Pilot</title>
+
+  <!-- Basis-Meta -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Pilot einer browserbasierten Physio-Dokumentationshilfe: strukturierte Doku in unter 60 Sekunden, alle Daten lokal im Browser." />
+
+  <!-- Fallback-Farben für Browser / Mobile -->
+  <meta name="theme-color" content="#0b1020" />
+
+  <!-- Externe Dateien (werden später von dir ergänzt) -->
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- App-Wrapper -->
+  <div class="app-root">
+
+    <!-- Kopfbereich -->
+    <header class="app-header">
+      <div class="app-header-left">
+        <h1 class="app-title">
+          Physio Doc Co-Pilot
+          <span class="app-badge">Pilot</span>
+        </h1>
+        <p class="app-subtitle">
+          Doku in unter 60&nbsp;Sekunden – alle Daten bleiben lokal in deinem Browser.
+        </p>
+      </div>
+
+      <div class="app-header-right">
+        <div class="app-header-status">
+          <span id="speech-status-indicator" class="status-indicator" aria-live="polite">
+            Mikrofon nicht aktiv
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hauptbereich -->
+    <main class="app-main" aria-label="Physio Doc Co-Pilot Oberfläche">
+
+      <!-- Sidebar: Patientenverwaltung -->
+      <aside class="sidebar" aria-label="Patientenliste und Neuanlage">
+        <section class="panel panel-patients" aria-labelledby="patients-heading">
+          <header class="panel-header">
+            <h2 id="patients-heading" class="panel-title">Patienten</h2>
+          </header>
+
+          <!-- Patientenliste -->
+          <ul id="patient-list" class="list patient-list" aria-label="Patientenübersicht">
+            <!-- Wird per JavaScript befüllt -->
+          </ul>
+
+          <div class="panel-divider" role="separator" aria-hidden="true"></div>
+
+          <!-- Neuer Patient -->
+          <section aria-labelledby="new-patient-heading" class="new-patient-section">
+            <h3 id="new-patient-heading" class="panel-subtitle">Neuen Patienten anlegen</h3>
+
+            <form id="new-patient-form" class="form form-vertical" autocomplete="off">
+              <div class="form-field">
+                <label for="patient-name-input">
+                  Name des Patienten
+                  <span class="field-hint">(Pflichtfeld)</span>
+                </label>
+                <input
+                  type="text"
+                  id="patient-name-input"
+                  name="patient-name"
+                  required
+                  placeholder="z. B. Max Mustermann"
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="form-field">
+                <label for="patient-year-input">
+                  Geburtsjahr
+                  <span class="field-hint">(optional)</span>
+                </label>
+                <input
+                  type="number"
+                  id="patient-year-input"
+                  name="patient-year"
+                  min="1900"
+                  max="2100"
+                  inputmode="numeric"
+                  placeholder="z. B. 1985"
+                />
+              </div>
+
+              <div class="form-field">
+                <label for="patient-region-input">
+                  Hauptbeschwerderegion
+                  <span class="field-hint">(optional)</span>
+                </label>
+                <select id="patient-region-input" name="patient-region">
+                  <option value="">– auswählen –</option>
+                  <option value="HWS">HWS / Nacken</option>
+                  <option value="LWS">LWS / unterer Rücken</option>
+                  <option value="Schulter">Schulter</option>
+                  <option value="Knie">Knie</option>
+                  <option value="Hüfte">Hüfte</option>
+                  <option value="Sonstiges">Sonstiges</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-full">
+                Patient anlegen
+              </button>
+            </form>
+          </section>
+        </section>
+      </aside>
+
+      <!-- Hauptcontent: ausgewählter Patient + Sitzungen -->
+      <section class="main-content" aria-label="Patientendetails und Sitzungen">
+
+        <!-- Zustand: kein Patient ausgewählt -->
+        <section id="no-patient-selected" class="empty-state" aria-live="polite">
+          <h2 class="empty-title">Willkommen 👋</h2>
+          <p class="empty-text">
+            Lege links einen neuen Patienten an oder wähle einen bestehenden aus, um mit der Dokumentation zu starten.
+          </p>
+          <p class="empty-text secondary">
+            Dieser Pilot speichert alle Daten ausschließlich lokal in deinem Browser – ideal zum Testen mit einer Praxis.
+          </p>
+        </section>
+
+        <!-- Zustand: Patient ausgewählt -->
+        <section id="patient-detail" class="patient-detail hidden" aria-live="polite" aria-label="Details zum ausgewählten Patienten">
+
+          <!-- Kopf des Patienten -->
+          <header class="panel patient-header">
+            <div class="patient-header-info">
+              <h2 id="patient-title" class="patient-name">
+                <!-- Name per JS -->
+              </h2>
+              <p id="patient-meta" class="patient-meta">
+                <!-- Zusatzinfos per JS -->
+              </p>
+            </div>
+
+            <div class="patient-header-actions">
+              <button id="add-session-btn" class="btn btn-primary" type="button">
+                Neue Sitzung
+              </button>
+            </div>
+          </header>
+
+          <!-- Layout: links Verlauf / rechts Editor -->
+          <div class="patient-layout">
+
+            <!-- Sitzungsverlauf & Score -->
+            <section class="panel sessions-panel" aria-label="Bisherige Sitzungen und Scores">
+              <header class="panel-header">
+                <h3 class="panel-title">Sitzungen & Verlauf</h3>
+              </header>
+
+              <ul id="session-list" class="list session-list" aria-label="Liste der Sitzungen">
+                <!-- Wird per JS befüllt -->
+              </ul>
+
+              <!-- Score-Chart: Verlauf eures Beschwerde-Scores -->
+              <div class="score-chart-wrapper">
+                <canvas
+                  id="score-chart"
+                  class="score-chart"
+                  width="400"
+                  height="200"
+                  aria-label="Verlauf der Beschwerde-Scores"
+                  role="img">
+                  <!-- Fallback-Text für Screenreader/alte Browser -->
+                  Dein Browser unterstützt keine Canvas-Elemente – Score-Verlauf wird hier nicht angezeigt.
+                </canvas>
+              </div>
+            </section>
+
+            <!-- Sitzungseditor -->
+            <section class="panel editor-panel" aria-label="Aktuelle Sitzung bearbeiten oder dokumentieren">
+
+              <!-- Zustand: noch keine Sitzung ausgewählt -->
+              <div id="no-session-selected" class="empty-state small">
+                <p class="empty-text">
+                  Noch keine Sitzung ausgewählt. Klicke auf
+                  <strong>„Neue Sitzung“</strong> oder wähle eine bestehende Sitzung links in der Liste.
+                </p>
+              </div>
+
+              <!-- Editor für eine Sitzung (wird per JS ein-/ausgeblendet) -->
+              <div id="session-editor" class="session-editor hidden">
+
+                <!-- Basisinfos zur Sitzung -->
+                <div class="editor-row editor-row-inline">
+                  <div class="form-field">
+                    <label for="session-type">
+                      Sitzungstyp
+                    </label>
+                    <select id="session-type" name="session-type">
+                      <option value="initial">Erstbefund</option>
+                      <option value="followup">Folgetermin</option>
+                    </select>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="session-date">
+                      Datum
+                    </label>
+                    <input
+                      type="date"
+                      id="session-date"
+                      name="session-date"
+                    />
+                  </div>
+
+                  <div class="form-field">
+                    <label for="session-region">
+                      Region dieser Sitzung
+                    </label>
+                    <select id="session-region" name="session-region">
+                      <option value="">– auswählen –</option>
+                      <option value="HWS">HWS / Nacken</option>
+                      <option value="LWS">LWS / unterer Rücken</option>
+                      <option value="Schulter">Schulter</option>
+                      <option value="Knie">Knie</option>
+                      <option value="Hüfte">Hüfte</option>
+                      <option value="Sonstiges">Sonstiges</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Beschwerde-Chips -->
+                <div class="editor-row">
+                  <div class="chip-group" aria-label="Hauptbeschwerden">
+                    <div class="chip-group-header">
+                      <span class="chip-group-title">Beschwerden</span>
+                      <span class="chip-group-hint">Mehrfachauswahl möglich</span>
+                    </div>
+                    <div id="complaint-chips" class="chips" role="list">
+                      <!-- Chips werden per JS erzeugt -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Maßnahmen-Chips -->
+                <div class="editor-row">
+                  <div class="chip-group" aria-label="Behandlungsmaßnahmen">
+                    <div class="chip-group-header">
+                      <span class="chip-group-title">Maßnahmen dieser Sitzung</span>
+                      <span class="chip-group-hint">Nutze deine Standard-Settings</span>
+                    </div>
+                    <div id="measure-chips" class="chips" role="list">
+                      <!-- Chips werden per JS erzeugt -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Skalen -->
+                <div class="editor-row sliders-row" aria-label="Bewertung von Schmerz und Alltags­einschränkung">
+                  <div class="slider-block">
+                    <label for="pain-slider">
+                      Schmerz (0 = kein Schmerz, 10 = maximaler Schmerz)
+                    </label>
+                    <div class="slider-value-row">
+                      <input
+                        type="range"
+                        id="pain-slider"
+                        name="pain"
+                        min="0"
+                        max="10"
+                        step="1"
+                        value="5"
+                      />
+                      <span id="pain-value" class="slider-value" aria-live="polite">5</span>
+                    </div>
+                  </div>
+
+                  <div class="slider-block">
+                    <label for="function-slider">
+                      Alltags­einschränkung (0 = keine, 10 = maximale Einschränkung)
+                    </label>
+                    <div class="slider-value-row">
+                      <input
+                        type="range"
+                        id="function-slider"
+                        name="function"
+                        min="0"
+                        max="10"
+                        step="1"
+                        value="5"
+                      />
+                      <span id="function-value" class="slider-value" aria-live="polite">5</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sprach-Notizen -->
+                <div class="editor-row speech-row">
+                  <div class="speech-controls">
+                    <button
+                      id="speech-toggle-btn"
+                      type="button"
+                      class="btn btn-secondary"
+                    >
+                      🎙️ Aufnahme starten
+                    </button>
+                    <span id="speech-hint" class="speech-hint">
+                      Optional: kurze Anamnese oder Folge-Notizen sprechen (am besten im Chrome-Browser).
+                    </span>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="speech-notes">
+                      Roh-Transkript / Stichworte
+                      <span class="field-hint">(optional, fließt später in die Doku ein)</span>
+                    </label>
+                    <textarea
+                      id="speech-notes"
+                      name="speech-notes"
+                      rows="3"
+                      placeholder="Hier erscheinen gesprochene Notizen oder stichwortartige Ergänzungen zur Sitzung."
+                    ></textarea>
+                  </div>
+                </div>
+
+                <!-- Generierte Doku -->
+                <div class="editor-row">
+                  <div class="form-field">
+                    <label for="session-note">
+                      Generierte Dokumentation
+                      <span class="field-hint">(voll editierbar, z. B. als SOAP-Notiz)</span>
+                    </label>
+                    <textarea
+                      id="session-note"
+                      name="session-note"
+                      rows="10"
+                      class="note-textarea"
+                      placeholder="Hier wird die strukturierte Doku für diese Sitzung erzeugt. Du kannst sie nachträglich anpassen."
+                    ></textarea>
+                  </div>
+                </div>
+
+                <!-- Score & Aktionen -->
+                <div class="editor-footer">
+                  <section class="score-block" aria-label="Beschwerde-Score">
+                    <div class="score-label">Beschwerde-Score</div>
+                    <div id="score-value" class="score-value">–</div>
+                    <div
+                      id="score-category"
+                      class="score-category"
+                      aria-live="polite"
+                    >
+                      Noch nicht berechnet
+                    </div>
+                  </section>
+
+                  <div class="editor-actions">
+                    <button
+                      id="generate-note-btn"
+                      type="button"
+                      class="btn btn-secondary"
+                    >
+                      Doku generieren
+                    </button>
+
+                    <button
+                      id="copy-note-btn"
+                      type="button"
+                      class="btn btn-secondary"
+                    >
+                      In Zwischenablage kopieren
+                    </button>
+
+                    <button
+                      id="save-session-btn"
+                      type="button"
+                      class="btn btn-primary"
+                    >
+                      Sitzung speichern
+                    </button>
+
+                    <button
+                      id="delete-session-btn"
+                      type="button"
+                      class="btn btn-danger"
+                    >
+                      Sitzung löschen
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <!-- Fußbereich -->
+    <footer class="app-footer">
+      <p class="footer-text">
+        Physio Doc Co-Pilot · Pilotversion · alle Daten werden ausschließlich lokal im Browser gespeichert.
+      </p>
+    </footer>
+  </div>
+
+  <!-- App-Logik (wird später von dir ergänzt) -->
+  <script src="./app.js" defer></script>
+</body>
+</html>
