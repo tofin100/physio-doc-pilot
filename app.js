@@ -1,8 +1,7 @@
-// app.js
+// app.js – Physio Doc Co-Pilot Pilot
+// Fokus: Patient extrem schnell anlegen, sofort Erstbefund starten
 
-// ---------- Global State & Constants ----------
-
-const STORAGE_KEY = "physioDocPilot_v1";
+const STORAGE_KEY = "physioDocPilot_v2";
 
 let state = {
   patients: [],
@@ -21,50 +20,19 @@ const COMPLAINT_OPTIONS = [
 ];
 
 const MEASURE_OPTIONS = [
-  { id: "mt", label: "Manuelle Therapie (MT)" },
-  { id: "pt", label: "Krankengymnastik (KG)" },
-  { id: "ml", label: "Lymphdrainage (MLD)" },
+  { id: "mt", label: "Manuelle Therapie" },
+  { id: "pt", label: "Krankengymnastik" },
+  { id: "ml", label: "Lymphdrainage" },
   { id: "exercise", label: "aktive Übungen" },
-  { id: "edu", label: "Patienten­edukation" },
+  { id: "edu", label: "Edukation" },
   { id: "taping", label: "Taping" },
   { id: "device", label: "Gerätetraining" }
 ];
 
-// Web Speech
 let recognition = null;
 let isRecording = false;
 
-// ---------- Storage Helpers ----------
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    if (parsed && Array.isArray(parsed.patients)) {
-      state = {
-        patients: parsed.patients,
-        selectedPatientId: null,
-        selectedSessionId: null
-      };
-    }
-  } catch (err) {
-    console.error("Failed to load state:", err);
-  }
-}
-
-function saveState() {
-  try {
-    const toSave = {
-      patients: state.patients
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-  } catch (err) {
-    console.error("Failed to save state:", err);
-  }
-}
-
-// ---------- Util ----------
+// --------------- Helpers ----------------
 
 function uuid() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -74,6 +42,28 @@ function uuid() {
   });
 }
 
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.patients)) {
+      state.patients = parsed.patients;
+    }
+  } catch (e) {
+    console.error("Load state error:", e);
+  }
+}
+
+function saveState() {
+  try {
+    const data = { patients: state.patients };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error("Save state error:", e);
+  }
+}
+
 function formatDateShort(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -81,17 +71,29 @@ function formatDateShort(iso) {
   return d.toLocaleDateString("de-DE");
 }
 
-// ---------- DOM Refs ----------
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getSelectedPatient() {
+  return state.patients.find((p) => p.id === state.selectedPatientId) || null;
+}
+
+function getSelectedSession(patient) {
+  if (!patient) return null;
+  return patient.sessions?.find((s) => s.id === state.selectedSessionId) || null;
+}
+
+// --------------- DOM refs ----------------
 
 const patientListEl = document.getElementById("patient-list");
-const patientDetailEl = document.getElementById("patient-detail");
-const noPatientSelectedEl = document.getElementById("no-patient-selected");
-
 const newPatientForm = document.getElementById("new-patient-form");
 const patientNameInput = document.getElementById("patient-name-input");
 const patientYearInput = document.getElementById("patient-year-input");
 const patientRegionInput = document.getElementById("patient-region-input");
 
+const noPatientSelectedEl = document.getElementById("no-patient-selected");
+const patientDetailEl = document.getElementById("patient-detail");
 const patientTitleEl = document.getElementById("patient-title");
 const patientMetaEl = document.getElementById("patient-meta");
 const addSessionBtn = document.getElementById("add-session-btn");
@@ -128,7 +130,125 @@ const deleteSessionBtn = document.getElementById("delete-session-btn");
 const scoreValueEl = document.getElementById("score-value");
 const scoreCategoryEl = document.getElementById("score-category");
 
-// ---------- Rendering ----------
+// --------------- Score & Note ----------------
+
+function calculateScore({ pain, func, complaintsCount }) {
+  const painNorm = (pain / 10) * 100;
+  const funcNorm = (func / 10) * 100;
+  const compNorm = Math.min(complaintsCount, 5) / 5 * 100;
+
+  const score =
+    painNorm * 0.4 +
+    funcNorm * 0.4 +
+    compNorm * 0.2;
+
+  return Math.round(score);
+}
+
+function scoreCategoryFromValue(score) {
+  if (score < 34) return { text: "milde Beschwerden", color: "#9ae6b4" };
+  if (score < 67) return { text: "moderate Beschwerden", color: "#faf089" };
+  return { text: "ausgeprägte Beschwerden", color: "#feb2b2" };
+}
+
+function generateNoteForSession(patient, session) {
+  const typeLabel = session.type === "initial" ? "Erstbefund" : "Folgetermin";
+  const dateLabel = session.date ? formatDateShort(session.date) : "ohne Datum";
+  const regionLabel = session.region || patient.mainRegion || "nicht spezifiziert";
+
+  const pain = typeof session.pain === "number" ? session.pain : 5;
+  const func = typeof session.function === "number" ? session.function : 5;
+  const complaintLabels = (session.complaints || []).map((id) => {
+    const opt = COMPLAINT_OPTIONS.find((c) => c.id === id);
+    return opt ? opt.label : id;
+  });
+  const measureLabels = (session.measures || []).map((id) => {
+    const opt = MEASURE_OPTIONS.find((m) => m.id === id);
+    return opt ? opt.label : id;
+  });
+
+  const score =
+    typeof session.score === "number"
+      ? session.score
+      : calculateScore({
+          pain,
+          func,
+          complaintsCount: complaintLabels.length
+        });
+
+  const scoreCat = scoreCategoryFromValue(score);
+
+  let subjective = "Subjektiv: ";
+  if (complaintLabels.length) {
+    subjective += `Patient:in berichtet über ${complaintLabels.join(", ")} im Bereich ${regionLabel}. `;
+  } else {
+    subjective += `Patient:in berichtet über Beschwerden im Bereich ${regionLabel}. `;
+  }
+  subjective += `Schmerzintensität aktuell ${pain}/10, Alltags­einschränkung ${func}/10. `;
+
+  let objective = "Objektiv: ";
+  if (session.complaints?.includes("limited_rom")) {
+    objective += "Beweglichkeit reduziert. ";
+  }
+  if (session.complaints?.includes("weakness")) {
+    objective += "Kraftdefizite in relevanten Muskelgruppen. ";
+  }
+  if (session.complaints?.includes("instability")) {
+    objective += "subjektives Instabilitätsgefühl, Stabilitätskontrolle geprüft. ";
+  }
+  if (objective === "Objektiv: ") {
+    objective += "Muskel- und Gelenkfunktion orientierend untersucht, weitere Tests je nach Verlauf. ";
+  }
+
+  let assessment = `Assessment: Beschwerde-Score ${score}/100 (${scoreCat.text}). `;
+  assessment += `Befund vereinbar mit funktionellen Einschränkungen der Region ${regionLabel}. `;
+  if (session.speechNotes && session.speechNotes.trim()) {
+    assessment += `Relevante Zusatzinformationen: ${session.speechNotes.trim()} `;
+  }
+
+  let plan = "Plan: ";
+  if (measureLabels.length) {
+    plan += `heute durchgeführt: ${measureLabels.join(", ")}. `;
+  } else {
+    plan += "symptomorientierte Behandlung durchgeführt. ";
+  }
+  plan += "Fortführung der Therapie, Anpassung der Belastung, Heimübungsprogramm nach Bedarf. ";
+
+  const header = `${typeLabel} am ${dateLabel} – Region: ${regionLabel}`;
+  return `${header}\n\n${subjective}\n\n${objective}\n\n${assessment}\n\n${plan}`;
+}
+
+// --------------- Data actions ----------------
+
+function createNewSession(patient, type = "initial") {
+  const session = {
+    id: uuid(),
+    type,
+    date: todayIso(),
+    region: patient.mainRegion || "",
+    complaints: [],
+    measures: [],
+    pain: 5,
+    function: 5,
+    speechNotes: "",
+    note: "",
+    score: null
+  };
+  if (!patient.sessions) patient.sessions = [];
+  patient.sessions.push(session);
+  return session;
+}
+
+function updateCurrentSession(updater) {
+  const patient = getSelectedPatient();
+  if (!patient) return;
+  const session = getSelectedSession(patient);
+  if (!session) return;
+  updater(session);
+  saveState();
+}
+
+// --------------- Rendering ----------------
 
 function render() {
   renderPatients();
@@ -137,9 +257,11 @@ function render() {
 
 function renderPatients() {
   patientListEl.innerHTML = "";
+
   if (!state.patients.length) {
     const li = document.createElement("li");
-    li.innerHTML = `<span class="meta">Noch keine Patienten</span>`;
+    li.textContent = "Noch keine Patienten – lege unten einen neuen an.";
+    li.className = "meta";
     li.style.cursor = "default";
     patientListEl.appendChild(li);
     return;
@@ -150,25 +272,31 @@ function renderPatients() {
     li.dataset.id = p.id;
 
     const nameSpan = document.createElement("span");
-    nameSpan.textContent = p.name;
+    nameSpan.textContent = p.name || "Unbenannter Patient";
 
     const metaSpan = document.createElement("span");
     metaSpan.className = "meta";
-    const agePart = p.birthYear ? `*${p.birthYear}` : "";
-    const regionPart = p.mainRegion ? p.mainRegion : "";
-    metaSpan.textContent = [agePart, regionPart].filter(Boolean).join(" · ");
+    const parts = [];
+    if (p.birthYear) parts.push(`*${p.birthYear}`);
+    if (p.mainRegion) parts.push(p.mainRegion);
+    metaSpan.textContent = parts.join(" · ");
 
     li.appendChild(nameSpan);
     li.appendChild(metaSpan);
 
-    if (p.id === state.selectedPatientId) {
-      li.classList.add("active");
-    }
+    if (p.id === state.selectedPatientId) li.classList.add("active");
 
     li.addEventListener("click", () => {
       state.selectedPatientId = p.id;
-      state.selectedSessionId = null;
-      render();
+      // falls noch keine Sitzung existiert → automatisch Erstbefund erstellen
+      if (!p.sessions || !p.sessions.length) {
+        const s = createNewSession(p, "initial");
+        state.selectedSessionId = s.id;
+      } else {
+        state.selectedSessionId = p.sessions[0].id;
+      }
+      saveState();
+      renderPatientDetail();
     });
 
     patientListEl.appendChild(li);
@@ -176,7 +304,7 @@ function renderPatients() {
 }
 
 function renderPatientDetail() {
-  const patient = state.patients.find((p) => p.id === state.selectedPatientId);
+  const patient = getSelectedPatient();
   if (!patient) {
     patientDetailEl.classList.add("hidden");
     noPatientSelectedEl.classList.remove("hidden");
@@ -187,7 +315,6 @@ function renderPatientDetail() {
   patientDetailEl.classList.remove("hidden");
 
   patientTitleEl.textContent = patient.name || "Unbenannter Patient";
-
   const meta = [];
   if (patient.birthYear) meta.push(`*${patient.birthYear}`);
   if (patient.mainRegion) meta.push(`Hauptregion: ${patient.mainRegion}`);
@@ -203,22 +330,20 @@ function renderSessions(patient) {
 
   if (!patient.sessions || !patient.sessions.length) {
     const li = document.createElement("li");
-    li.innerHTML = `<span class="meta">Noch keine Sitzungen</span>`;
+    li.textContent = "Noch keine Sitzungen";
+    li.className = "meta";
     li.style.cursor = "default";
     sessionListEl.appendChild(li);
     return;
   }
 
-  const sorted = [...patient.sessions].sort((a, b) => {
-    const da = new Date(a.date || 0).getTime();
-    const db = new Date(b.date || 0).getTime();
-    return db - da;
-  });
+  const sorted = [...patient.sessions].sort(
+    (a, b) => new Date(b.date || 0) - new Date(a.date || 0)
+  );
 
   sorted.forEach((s) => {
     const li = document.createElement("li");
     li.dataset.id = s.id;
-    if (s.id === state.selectedSessionId) li.classList.add("active");
 
     const main = document.createElement("span");
     const typeLabel = s.type === "initial" ? "Erstbefund" : "Folgetermin";
@@ -227,15 +352,15 @@ function renderSessions(patient) {
 
     const meta = document.createElement("span");
     meta.className = "meta";
-    const score = typeof s.score === "number" ? s.score.toFixed(0) : null;
-    const region = s.region || "";
     const parts = [];
-    if (region) parts.push(region);
-    if (score !== null) parts.push(`Score ${score}`);
+    if (s.region) parts.push(s.region);
+    if (typeof s.score === "number") parts.push(`Score ${s.score}`);
     meta.textContent = parts.join(" · ");
 
     li.appendChild(main);
     li.appendChild(meta);
+
+    if (s.id === state.selectedSessionId) li.classList.add("active");
 
     li.addEventListener("click", () => {
       state.selectedSessionId = s.id;
@@ -247,9 +372,7 @@ function renderSessions(patient) {
 }
 
 function renderSessionEditor(patient) {
-  const session =
-    patient.sessions?.find((s) => s.id === state.selectedSessionId) || null;
-
+  const session = getSelectedSession(patient);
   if (!session) {
     sessionEditorEl.classList.add("hidden");
     noSessionSelectedEl.classList.remove("hidden");
@@ -260,10 +383,11 @@ function renderSessionEditor(patient) {
   noSessionSelectedEl.classList.add("hidden");
 
   sessionTypeSelect.value = session.type || "initial";
-  sessionDateInput.value = session.date || "";
-  sessionRegionSelect.value = session.region || patient.mainRegion || "";
+  sessionDateInput.value = session.date || todayIso();
+  sessionRegionSelect.value =
+    session.region || patient.mainRegion || "";
 
-  // complaints
+  // Chips: Beschwerden
   complaintChipsEl.innerHTML = "";
   const selectedComplaints = session.complaints || [];
   COMPLAINT_OPTIONS.forEach((opt) => {
@@ -273,14 +397,15 @@ function renderSessionEditor(patient) {
     chip.textContent = opt.label;
     if (selectedComplaints.includes(opt.id)) chip.classList.add("active");
     chip.addEventListener("click", () => {
-      toggleChipSelection(selectedComplaints, opt.id);
+      toggleInArray(selectedComplaints, opt.id);
       session.complaints = [...selectedComplaints];
+      saveState();
       renderSessionEditor(patient);
     });
     complaintChipsEl.appendChild(chip);
   });
 
-  // measures
+  // Chips: Maßnahmen
   measureChipsEl.innerHTML = "";
   const selectedMeasures = session.measures || [];
   MEASURE_OPTIONS.forEach((opt) => {
@@ -290,33 +415,29 @@ function renderSessionEditor(patient) {
     chip.textContent = opt.label;
     if (selectedMeasures.includes(opt.id)) chip.classList.add("active");
     chip.addEventListener("click", () => {
-      toggleChipSelection(selectedMeasures, opt.id);
+      toggleInArray(selectedMeasures, opt.id);
       session.measures = [...selectedMeasures];
+      saveState();
       renderSessionEditor(patient);
     });
     measureChipsEl.appendChild(chip);
   });
 
-  // sliders
-  const painVal = typeof session.pain === "number" ? session.pain : 5;
-  painSlider.value = painVal;
-  painValueEl.textContent = painVal;
+  const pain = typeof session.pain === "number" ? session.pain : 5;
+  const func = typeof session.function === "number" ? session.function : 5;
+  painSlider.value = pain;
+  painValueEl.textContent = pain;
+  functionSlider.value = func;
+  functionValueEl.textContent = func;
 
-  const funcVal =
-    typeof session.function === "number" ? session.function : 5;
-  functionSlider.value = funcVal;
-  functionValueEl.textContent = funcVal;
-
-  // speech notes & note text
   speechNotesEl.value = session.speechNotes || "";
   sessionNoteEl.value = session.note || "";
 
-  // score
   if (typeof session.score === "number") {
-    scoreValueEl.textContent = session.score.toFixed(0);
-    const category = scoreCategoryFromValue(session.score);
-    scoreCategoryEl.textContent = category.text;
-    scoreCategoryEl.style.color = category.color;
+    scoreValueEl.textContent = session.score;
+    const cat = scoreCategoryFromValue(session.score);
+    scoreCategoryEl.textContent = cat.text;
+    scoreCategoryEl.style.color = cat.color;
   } else {
     scoreValueEl.textContent = "–";
     scoreCategoryEl.textContent = "Noch nicht berechnet";
@@ -324,115 +445,15 @@ function renderSessionEditor(patient) {
   }
 }
 
-function toggleChipSelection(arr, id) {
+function toggleInArray(arr, id) {
   const idx = arr.indexOf(id);
   if (idx === -1) arr.push(id);
   else arr.splice(idx, 1);
 }
 
-// ---------- Score & Note Generation ----------
-
-function calculateScore({ pain, func, complaintsCount }) {
-  const painWeight = 0.4;
-  const funcWeight = 0.4;
-  const compWeight = 0.2;
-
-  const painNorm = (pain / 10) * 100;
-  const funcNorm = (func / 10) * 100;
-  const compNorm = Math.min(complaintsCount, 5) / 5 * 100;
-
-  const score = painNorm * painWeight + funcNorm * funcWeight + compNorm * compWeight;
-  return Math.round(score);
-}
-
-function scoreCategoryFromValue(score) {
-  if (score < 34)
-    return { text: "milde Beschwerden", color: "#9ae6b4" };
-  if (score < 67)
-    return { text: "moderate Beschwerden", color: "#faf089" };
-  return { text: "ausgeprägte Beschwerden", color: "#feb2b2" };
-}
-
-function generateNoteForSession(patient, session) {
-  const typeLabel = session.type === "initial" ? "Erstbefund" : "Folgetermin";
-  const dateLabel = session.date ? formatDateShort(session.date) : "ohne Datum";
-  const regionLabel = session.region || patient.mainRegion || "nicht näher spezifiziert";
-
-  const pain = typeof session.pain === "number" ? session.pain : null;
-  const func = typeof session.function === "number" ? session.function : null;
-
-  const complaintLabels = (session.complaints || []).map((id) => {
-    const opt = COMPLAINT_OPTIONS.find((c) => c.id === id);
-    return opt ? opt.label : id;
-  });
-
-  const measureLabels = (session.measures || []).map((id) => {
-    const opt = MEASURE_OPTIONS.find((m) => m.id === id);
-    return opt ? opt.label : id;
-  });
-
-  const score =
-    typeof session.score === "number"
-      ? session.score
-      : calculateScore({
-          pain: pain ?? 5,
-          func: func ?? 5,
-          complaintsCount: complaintLabels.length
-        });
-
-  const scoreCat = scoreCategoryFromValue(score);
-
-  let subjective = `Subjektiv: `;
-  if (complaintLabels.length) {
-    subjective += `Patient:in berichtet über ${complaintLabels.join(", ")} im Bereich ${regionLabel}. `;
-  } else {
-    subjective += `Patient:in berichtet über Beschwerden im Bereich ${regionLabel}. `;
-  }
-  if (pain !== null) {
-    subjective += `Schmerzintensität aktuell ${pain}/10. `;
-  }
-  if (func !== null) {
-    subjective += `Alltags­einschränkung wird mit ${func}/10 angegeben. `;
-  }
-
-  let objective = `Objektiv: `;
-  if (session.complaints?.includes("limited_rom")) {
-    objective += `Beweglichkeit in der betroffenen Region reduziert. `;
-  }
-  if (session.complaints?.includes("weakness")) {
-    objective += `Kraftdefizite in relevanten Muskelgruppen. `;
-  }
-  if (session.complaints?.includes("instability")) {
-    objective += `subjektives Instabilitätsgefühl, Stabilitätskontrolle überprüft. `;
-  }
-  if (objective === "Objektiv: ") {
-    objective += `Muskel- und Gelenkfunktion orientierend untersucht, weitere Tests je nach Verlauf. `;
-  }
-
-  let assessment = `Assessment: `;
-  assessment += `Beschwerde-Score ${score}/100 (${scoreCat.text}). `;
-  assessment += `Klinischer Befund vereinbar mit funktionellen Einschränkungen der Region ${regionLabel}. Prognose abhängig von Therapieadhärenz und Belastungsanpassung. `;
-
-  if (session.speechNotes && session.speechNotes.trim()) {
-    assessment += `Zusatznotizen: ${session.speechNotes.trim()} `;
-  }
-
-  let plan = `Plan: `;
-  if (measureLabels.length) {
-    plan += `Heute durchgeführt: ${measureLabels.join(", ")}. `;
-  } else {
-    plan += `Heutige Behandlung symptomorientiert durchgeführt. `;
-  }
-  plan += `Fortführung der Behandlung, Anpassung der Belastung im Alltag, Heimübungsprogramm je nach Verlauf. `;
-
-  const header = `${typeLabel} am ${dateLabel} – Region: ${regionLabel}`;
-  return `${header}\n\n${subjective}\n\n${objective}\n\n${assessment}\n\n${plan}`;
-}
-
-// ---------- Chart ----------
+// --------------- Chart ----------------
 
 function renderScoreChart(patient) {
-  if (!scoreChartEl) return;
   const ctx = scoreChartEl.getContext("2d");
   ctx.clearRect(0, 0, scoreChartEl.width, scoreChartEl.height);
 
@@ -443,14 +464,14 @@ function renderScoreChart(patient) {
     return;
   }
 
-  const sessionsWithScore = patient.sessions
+  const items = patient.sessions
     .filter((s) => typeof s.score === "number" && s.date)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  if (!sessionsWithScore.length) {
+  if (!items.length) {
     ctx.fillStyle = "#4a5568";
     ctx.font = "12px system-ui";
-    ctx.fillText("Scores erscheinen hier, sobald berechnet wurde.", 10, 20);
+    ctx.fillText("Scores erscheinen, sobald du Dokus generierst.", 10, 20);
     return;
   }
 
@@ -458,60 +479,36 @@ function renderScoreChart(patient) {
   const w = scoreChartEl.width - padding * 2;
   const h = scoreChartEl.height - padding * 2;
 
-  const minScore = 0;
-  const maxScore = 100;
-
   ctx.strokeStyle = "#4a5568";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(padding, padding + h);
-  ctx.lineTo(padding, padding);
-  ctx.lineTo(padding + w, padding);
+  ctx.moveTo(padding, padding);
+  ctx.lineTo(padding, padding + h);
+  ctx.lineTo(padding + w, padding + h);
   ctx.stroke();
 
-  ctx.fillStyle = "#4a5568";
-  ctx.font = "10px system-ui";
-  ctx.fillText("Score", padding + 4, padding + 10);
-
-  ctx.strokeStyle = "rgba(72, 187, 120, 0.4)";
-  ctx.beginPath();
-  const yMild = padding + h - (34 / 100) * h;
-  ctx.moveTo(padding, yMild);
-  ctx.lineTo(padding + w, yMild);
-  ctx.stroke();
-
-  ctx.strokeStyle = "rgba(246, 224, 94, 0.4)";
-  ctx.beginPath();
-  const yMod = padding + h - (67 / 100) * h;
-  ctx.moveTo(padding, yMod);
-  ctx.lineTo(padding + w, yMod);
-  ctx.stroke();
-
-  const stepX =
-    sessionsWithScore.length > 1
-      ? w / (sessionsWithScore.length - 1)
-      : 0;
+  const stepX = items.length > 1 ? w / (items.length - 1) : 0;
 
   ctx.strokeStyle = "#4fd1c5";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  sessionsWithScore.forEach((s, index) => {
-    const x = padding + index * stepX;
-    const norm = (s.score - minScore) / (maxScore - minScore);
+
+  items.forEach((s, idx) => {
+    const x = padding + idx * stepX;
+    const norm = s.score / 100;
     const y = padding + h - norm * h;
-
-    if (index === 0) ctx.moveTo(x, y);
+    if (idx === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
-
     ctx.fillStyle = "#63b3ed";
     ctx.beginPath();
     ctx.arc(x, y, 3, 0, Math.PI * 2);
     ctx.fill();
   });
+
   ctx.stroke();
 }
 
-// ---------- Speech ----------
+// --------------- Speech ----------------
 
 function initSpeech() {
   const SpeechRecognition =
@@ -520,8 +517,8 @@ function initSpeech() {
   if (!SpeechRecognition) {
     speechToggleBtn.disabled = true;
     speechHintEl.textContent =
-      "Sprachfunktion in diesem Browser nicht verfügbar (am besten Chrome verwenden).";
-    speechStatusIndicator.textContent = "Mikro nicht verfügbar";
+      "Sprachfunktion in diesem Browser nicht verfügbar (Chrome empfohlen).";
+    speechStatusIndicator.textContent = "Mikrofon nicht verfügbar";
     return;
   }
 
@@ -533,19 +530,19 @@ function initSpeech() {
   recognition.onstart = () => {
     isRecording = true;
     speechToggleBtn.textContent = "⏹️ Aufnahme stoppen";
-    speechStatusIndicator.textContent = "Mikro aktiv – Aufnahme läuft";
+    speechStatusIndicator.textContent = "Mikrofon aktiv";
     speechStatusIndicator.classList.add("active");
   };
 
   recognition.onend = () => {
     isRecording = false;
     speechToggleBtn.textContent = "🎙️ Aufnahme starten";
-    speechStatusIndicator.textContent = "Mikro bereit";
+    speechStatusIndicator.textContent = "Mikrofon bereit";
     speechStatusIndicator.classList.remove("active");
   };
 
-  recognition.onerror = (event) => {
-    console.error("Speech recognition error:", event.error);
+  recognition.onerror = (e) => {
+    console.error("Speech error:", e.error);
     isRecording = false;
     speechToggleBtn.textContent = "🎙️ Aufnahme starten";
     speechStatusIndicator.textContent = "Fehler bei Spracheingabe";
@@ -553,62 +550,51 @@ function initSpeech() {
   };
 
   recognition.onresult = (event) => {
-    let finalTranscript = "";
+    let finalText = "";
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
       if (event.results[i].isFinal) {
-        finalTranscript += transcript + " ";
+        finalText += event.results[i][0].transcript + " ";
       }
     }
-    if (finalTranscript) {
+    if (finalText) {
       const current = speechNotesEl.value.trim();
-      speechNotesEl.value = (current + " " + finalTranscript).trim();
-      const patient = state.patients.find(
-        (p) => p.id === state.selectedPatientId
-      );
-      if (patient) {
-        const session = patient.sessions?.find(
-          (s) => s.id === state.selectedSessionId
-        );
-        if (session) {
-          session.speechNotes = speechNotesEl.value;
-          saveState();
-        }
-      }
+      speechNotesEl.value = (current + " " + finalText).trim();
+      updateCurrentSession((session) => {
+        session.speechNotes = speechNotesEl.value;
+      });
     }
   };
 
-  speechStatusIndicator.textContent = "Mikro bereit";
+  speechStatusIndicator.textContent = "Mikrofon bereit";
 }
 
 function toggleSpeech() {
   if (!recognition) return;
-  if (isRecording) {
-    recognition.stop();
-  } else {
+  if (isRecording) recognition.stop();
+  else {
     try {
       recognition.start();
-    } catch (err) {
-      console.error("Error starting recognition:", err);
+    } catch (e) {
+      console.error("start recognition error", e);
     }
   }
 }
 
-// ---------- Event Handlers ----------
+// --------------- Event listeners ----------------
 
 function setupEventListeners() {
   newPatientForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const name = patientNameInput.value.trim();
+    if (!name) {
+      alert("Bitte einen Namen eingeben.");
+      return;
+    }
+
     const year = patientYearInput.value
       ? parseInt(patientYearInput.value, 10)
       : null;
     const region = patientRegionInput.value || "";
-
-    if (!name) {
-      alert("Bitte gib einen Namen ein.");
-      return;
-    }
 
     const patient = {
       id: uuid(),
@@ -619,7 +605,10 @@ function setupEventListeners() {
     };
     state.patients.push(patient);
     state.selectedPatientId = patient.id;
-    state.selectedSessionId = null;
+
+    // direkt Erstbefund erstellen & auswählen
+    const s = createNewSession(patient, "initial");
+    state.selectedSessionId = s.id;
 
     patientNameInput.value = "";
     patientYearInput.value = "";
@@ -630,29 +619,32 @@ function setupEventListeners() {
   });
 
   addSessionBtn.addEventListener("click", () => {
-    const patient = state.patients.find(
-      (p) => p.id === state.selectedPatientId
-    );
+    const patient = getSelectedPatient();
     if (!patient) return;
-
-    const todayIso = new Date().toISOString().slice(0, 10);
-    const newSession = {
-      id: uuid(),
-      type: patient.sessions.length ? "followup" : "initial",
-      date: todayIso,
-      region: patient.mainRegion || "",
-      complaints: [],
-      measures: [],
-      pain: 5,
-      function: 5,
-      speechNotes: "",
-      note: "",
-      score: null
-    };
-    patient.sessions.push(newSession);
-    state.selectedSessionId = newSession.id;
+    const s = createNewSession(patient, "followup");
+    state.selectedSessionId = s.id;
     saveState();
     renderPatientDetail();
+  });
+
+  sessionTypeSelect.addEventListener("change", () => {
+    updateCurrentSession((session) => {
+      session.type = sessionTypeSelect.value;
+    });
+    renderPatientDetail();
+  });
+
+  sessionDateInput.addEventListener("change", () => {
+    updateCurrentSession((session) => {
+      session.date = sessionDateInput.value || todayIso();
+    });
+    renderPatientDetail();
+  });
+
+  sessionRegionSelect.addEventListener("change", () => {
+    updateCurrentSession((session) => {
+      session.region = sessionRegionSelect.value;
+    });
   });
 
   painSlider.addEventListener("input", () => {
@@ -671,25 +663,6 @@ function setupEventListeners() {
     });
   });
 
-  sessionTypeSelect.addEventListener("change", () => {
-    updateCurrentSession((session) => {
-      session.type = sessionTypeSelect.value;
-    });
-  });
-
-  sessionDateInput.addEventListener("change", () => {
-    updateCurrentSession((session) => {
-      session.date = sessionDateInput.value;
-    });
-    renderPatientDetail();
-  });
-
-  sessionRegionSelect.addEventListener("change", () => {
-    updateCurrentSession((session) => {
-      session.region = sessionRegionSelect.value;
-    });
-  });
-
   speechNotesEl.addEventListener("input", () => {
     updateCurrentSession((session) => {
       session.speechNotes = speechNotesEl.value;
@@ -703,26 +676,17 @@ function setupEventListeners() {
   });
 
   generateNoteBtn.addEventListener("click", () => {
-    const patient = state.patients.find(
-      (p) => p.id === state.selectedPatientId
-    );
-    if (!patient) return;
-    const session = patient.sessions?.find(
-      (s) => s.id === state.selectedSessionId
-    );
-    if (!session) return;
+    const patient = getSelectedPatient();
+    const session = getSelectedSession(patient);
+    if (!patient || !session) return;
 
     const complaintsCount = session.complaints?.length || 0;
-    const pain =
-      typeof session.pain === "number" ? session.pain : 5;
-    const func =
-      typeof session.function === "number" ? session.function : 5;
+    const pain = typeof session.pain === "number" ? session.pain : 5;
+    const func = typeof session.function === "number" ? session.function : 5;
 
     const score = calculateScore({ pain, func, complaintsCount });
     session.score = score;
-
-    const note = generateNoteForSession(patient, session);
-    session.note = note;
+    session.note = generateNoteForSession(patient, session);
 
     saveState();
     renderPatientDetail();
@@ -740,8 +704,8 @@ function setupEventListeners() {
       setTimeout(() => {
         copyNoteBtn.textContent = "In Zwischenablage kopieren";
       }, 1500);
-    } catch (err) {
-      console.error("Clipboard error:", err);
+    } catch (e) {
+      console.error("Clipboard error:", e);
       alert("Konnte nicht in die Zwischenablage kopieren.");
     }
   });
@@ -752,23 +716,12 @@ function setupEventListeners() {
   });
 
   deleteSessionBtn.addEventListener("click", () => {
-    const patient = state.patients.find(
-      (p) => p.id === state.selectedPatientId
-    );
-    if (!patient) return;
-
-    const session = patient.sessions?.find(
-      (s) => s.id === state.selectedSessionId
-    );
-    if (!session) return;
-
-    const ok = confirm("Diese Sitzung wirklich löschen?");
-    if (!ok) return;
-
-    patient.sessions = patient.sessions.filter(
-      (s) => s.id !== session.id
-    );
-    state.selectedSessionId = null;
+    const patient = getSelectedPatient();
+    const session = getSelectedSession(patient);
+    if (!patient || !session) return;
+    if (!confirm("Sitzung wirklich löschen?")) return;
+    patient.sessions = patient.sessions.filter((s) => s.id !== session.id);
+    state.selectedSessionId = patient.sessions[0]?.id || null;
     saveState();
     renderPatientDetail();
   });
@@ -778,20 +731,7 @@ function setupEventListeners() {
   });
 }
 
-function updateCurrentSession(updater) {
-  const patient = state.patients.find(
-    (p) => p.id === state.selectedPatientId
-  );
-  if (!patient) return;
-  const session = patient.sessions?.find(
-    (s) => s.id === state.selectedSessionId
-  );
-  if (!session) return;
-  updater(session);
-  saveState();
-}
-
-// ---------- Init ----------
+// --------------- Init ----------------
 
 document.addEventListener("DOMContentLoaded", () => {
   loadState();
