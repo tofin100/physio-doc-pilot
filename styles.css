@@ -1,0 +1,485 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0b1020;
+  --bg-alt: #151a2c;
+  --panel: #181e33;
+  --panel-alt: #1f2640;
+  --accent: #4fd1c5;
+  --accent-soft: rgba(79, 209, 197, 0.15);
+  --danger: #f56565;
+  --text: #f7fafc;
+  --muted: #a0aec0;
+  --border: #2d3748;
+  --radius: 10px;
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-main);
+  background: radial-gradient(circle at top, #1a365d 0, #0b1020 45%, #020308 100%);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Layout */
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, rgba(24, 39, 74, 0.96), rgba(27, 42, 78, 0.92));
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid rgba(79, 209, 197, 0.4);
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.status-indicator {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.7);
+  color: var(--muted);
+}
+
+.status-indicator.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.app-main {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  min-height: calc(100vh - 120px);
+}
+
+.app-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.8rem;
+  background: rgba(10, 14, 25, 0.95);
+}
+
+/* Panels & base components */
+
+.sidebar {
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.panel {
+  background: rgba(12, 18, 36, 0.96);
+  border-radius: var(--radius);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 14px 14px 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.panel h2,
+.panel h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.panel-divider {
+  margin: 10px 0;
+  height: 1px;
+  background: radial-gradient(circle at center, rgba(148, 163, 184, 0.6), transparent 70%);
+}
+
+/* Lists */
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list li {
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list li + li {
+  margin-top: 4px;
+}
+
+.list li .meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.list li:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.list li.active {
+  background: var(--accent-soft);
+  border: 1px solid rgba(79, 209, 197, 0.6);
+}
+
+.small-list li {
+  font-size: 0.85rem;
+}
+
+/* Forms */
+
+.form-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--text);
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(79, 209, 197, 0.4);
+}
+
+/* Buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--text);
+  transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, #38b2ac, #63b3ed);
+  border-color: transparent;
+  color: #0b1020;
+  box-shadow: 0 10px 25px rgba(56, 178, 172, 0.45);
+}
+
+.btn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(56, 178, 172, 0.65);
+}
+
+.btn.secondary {
+  border-color: rgba(148, 163, 184, 0.7);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.btn.secondary:hover {
+  background: rgba(30, 64, 175, 0.6);
+}
+
+.btn.danger {
+  border-color: rgba(248, 113, 113, 0.7);
+  color: #fed7d7;
+  background: rgba(127, 29, 29, 0.7);
+}
+
+.btn.danger:hover {
+  background: rgba(185, 28, 28, 0.9);
+}
+
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.btn.full-width {
+  width: 100%;
+}
+
+/* Empty states */
+
+.empty-state,
+.small-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+
+.empty-state h2 {
+  margin-top: 0;
+}
+
+.small-empty-state {
+  padding: 20px 10px;
+}
+
+/* Patient detail layout */
+
+.patient-detail.hidden {
+  display: none;
+}
+
+.patient-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.patient-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.patient-header .muted {
+  margin-top: 2px;
+}
+
+.patient-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.patient-meta-line {
+  display: flex;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.75rem;
+}
+
+/* Chips */
+
+.chip-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.8);
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.chip.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: rgba(79, 209, 197, 0.8);
+}
+
+/* Sliders */
+
+.sliders-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.slider-block {
+  flex: 1 1 160px;
+}
+
+.slider-value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+input[type="range"] {
+  flex: 1;
+}
+
+.slider-value {
+  min-width: 24px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+/* Editor */
+
+.editor-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.editor-row {
+  margin-bottom: 8px;
+}
+
+.note-textarea {
+  min-height: 180px;
+}
+
+.editor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.score-block {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.15), rgba(15, 23, 42, 0.9));
+}
+
+.score-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.score-value {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.score-category {
+  margin-top: 2px;
+}
+
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Speech */
+
+.speech-row textarea {
+  font-size: 0.85rem;
+}
+
+/* Chart */
+
+.score-chart {
+  margin-top: 10px;
+  width: 100%;
+  border-radius: 8px;
+  background: rgba(9, 13, 26, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* Utility */
+
+.patient-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .app-main {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    max-height: none;
+  }
+
+  .patient-layout {
+    grid-template-columns: 1fr;
+  }
+}
