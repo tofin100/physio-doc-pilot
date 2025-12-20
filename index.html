@@ -6,7 +6,7 @@
   <title>PhysioNote</title>
 
   <style>
-    :root {
+    :root{
       --bg:#f5f5f7;
       --card:#ffffff;
       --border:#d1d5db;
@@ -18,49 +18,69 @@
       --muted:#6b7280;
       --danger:#b91c1c;
       --gold:#f59e0b;
-      --gold-soft:rgba(245,158,11,.10);
       --shadow:0 10px 30px rgba(15,23,42,.06);
       --radius:18px;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; padding:0;
+      margin:0;
       font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:var(--bg); color:var(--text);
+      background:var(--bg);
+      color:var(--text);
     }
-    .app-shell{max-width:1200px;margin:0 auto;padding:22px 14px 36px}
+    .app-shell{max-width:1200px;margin:0 auto;padding:18px 14px 34px}
     .card{
       border-radius:var(--radius);
       border:1px solid var(--border);
       background:var(--card);
       box-shadow:var(--shadow);
-      padding:18px 20px;
+      padding:16px 18px;
     }
-    .card + .card{margin-top:14px}
+    .card + .card{margin-top:12px}
     .hidden{display:none!important}
 
-    /* Header */
-    .hero{
-      position:relative; overflow:hidden;
-      padding:18px 20px;
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+    select,input[type="date"],input[type="text"],textarea{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#f9fafb;
+      color:var(--text);
+      font-size:13px;
+      padding:9px 10px;
+      outline:none;
     }
-    .hero::before{
-      content:"";
-      position:absolute; inset:-40%;
-      background:
-        radial-gradient(circle at 15% 0%, rgba(6,182,212,.20), transparent 55%),
-        radial-gradient(circle at 85% 10%, rgba(15,23,42,.08), transparent 60%);
-      pointer-events:none;
+    select:focus,input:focus,textarea:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 2px rgba(6,182,212,.18);
+      background:#fff;
     }
-    .hero-inner{
-      position:relative; z-index:1;
-      display:flex; justify-content:space-between; align-items:flex-start;
-      gap:14px; flex-wrap:wrap;
+
+    .btn{
+      border-radius:999px;border:none;
+      padding:9px 14px;
+      font-size:12px;font-weight:700;
+      cursor:pointer;
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      transition:transform .05s ease, filter .12s ease, background .12s ease;
+      user-select:none;white-space:nowrap;
     }
-    .brand h1{margin:0;font-size:28px;font-weight:850;letter-spacing:-.03em;color:var(--accent-dark)}
-    .brand .sub{margin-top:6px;font-size:13px;color:var(--muted);max-width:760px;line-height:1.35}
-    .right{
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{background:var(--accent);color:#ecfeff;box-shadow:0 8px 24px rgba(6,182,212,.28)}
+    .btn-primary:hover{filter:brightness(1.03)}
+    .btn-ghost{background:#f9fafb;color:var(--accent-dark);border:1px solid var(--border)}
+    .btn-ghost:hover{background:#fff}
+    .btn-danger{background:#fee2e2;color:var(--danger);border:1px solid #fecaca}
+    .btn-gold{background:#fff7ed;color:var(--gold);border:1px solid rgba(245,158,11,.55)}
+    .btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+    .topbar{
+      display:grid;
+      grid-template-columns: minmax(0,1.6fr) minmax(0,1fr) auto;
+      gap:12px;align-items:end;
+    }
+    @media (max-width: 980px){
+      .topbar{grid-template-columns:1fr}
     }
 
     .pill{
@@ -74,149 +94,74 @@
     .dot.on{background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.12)}
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
 
-    /* Controls */
-    label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
-    select, input[type="date"], input[type="text"], textarea{
-      width:100%;
-      border-radius:12px;
+    .tabs{
+      display:flex;gap:6px;flex-wrap:wrap;
+      padding:8px;
       border:1px solid var(--border);
-      background:#f9fafb;
-      color:var(--text);
-      font-size:13px;
-      padding:9px 10px;
-      outline:none;
-    }
-    select:focus, input:focus, textarea:focus{
-      border-color:var(--accent);
-      box-shadow:0 0 0 2px rgba(6,182,212,.18);
-      background:#fff;
-    }
-
-    .top-grid{
-      display:grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-      gap:14px;
-      align-items:end;
-    }
-    @media (max-width: 900px){
-      .top-grid{grid-template-columns:1fr}
-    }
-
-    .btn{
-      border-radius:999px;
-      border:none;
-      padding:9px 14px;
-      font-size:12px;
-      font-weight:700;
-      cursor:pointer;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      transition:transform .05s ease, filter .12s ease, background .12s ease;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .btn:active{transform:translateY(1px)}
-    .btn-primary{background:var(--accent);color:#ecfeff;box-shadow:0 8px 24px rgba(6,182,212,.30)}
-    .btn-primary:hover{filter:brightness(1.03)}
-    .btn-ghost{background:#f9fafb;color:var(--accent-dark);border:1px solid var(--border)}
-    .btn-ghost:hover{background:#fff}
-    .btn-gold{
-      background:#fff7ed;color:var(--gold);
-      border:1px solid rgba(245,158,11,.55);
-      box-shadow:0 0 0 1px var(--gold-soft);
-    }
-    .btn-danger{background:#fee2e2;color:var(--danger);border:1px solid #fecaca}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-    .btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
-
-    .status{
-      margin-top:10px;
       border-radius:14px;
-      padding:10px 12px;
-      border:1px solid rgba(15,23,42,.10);
       background:#f9fafb;
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.35;
-      word-break:break-word;
     }
-    .kbd{
-      font-size:11px;
-      padding:2px 6px;
-      border-radius:6px;
-      border:1px solid rgba(15,23,42,.15);
-      background:#fff;
-      color:#0f172a;
-    }
-
-    /* Session */
-    .section-title{margin:0 0 10px 0;font-size:14px;font-weight:700;color:var(--accent-dark)}
-    .grid-session-head{
-      display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
-      margin-bottom:10px;
-    }
-    .grid-session-head .left{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
-    .field{min-width:210px}
-    @media (max-width: 700px){ .field{min-width: 100%} }
-
-    /* Tabs */
-    .tabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px}
     .tab{
       border-radius:999px;
       padding:7px 12px;
       font-size:12px;
       cursor:pointer;
-      border:1px solid var(--border);
-      background:#f9fafb;
+      border:1px solid transparent;
+      background:transparent;
       color:var(--muted);
       user-select:none;
     }
+    .tab:hover{background:#ffffff}
     .tab.active{
       background:var(--accent);
       color:#ecfeff;
       border-color:var(--accent);
-      box-shadow:0 6px 18px rgba(6,182,212,.28);
+      box-shadow:0 6px 18px rgba(6,182,212,.24);
     }
     .tab.filled{
       border-color:#22c55e;
       color:#166534;
-      box-shadow:0 0 0 1px rgba(34,197,94,.28);
+      background:rgba(34,197,94,.08);
+    }
+    .tab.active.filled{
+      background:linear-gradient(90deg, rgba(6,182,212,1), rgba(34,197,94,.90));
+      border-color:transparent;
+      color:#ecfeff;
     }
 
     .panel{
-      border-radius:14px;
+      margin-top:10px;
+      border-radius:16px;
       border:1px solid var(--border);
       background:#f9fafb;
       padding:12px 14px;
     }
     .panelHead{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;
-      flex-wrap:wrap;
+      display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;
+      margin-bottom:10px;
     }
-    .panelHead strong{font-size:13px;color:var(--accent-dark)}
+    .panelHead .title{
+      font-size:14px;font-weight:800;color:var(--accent-dark);margin:0;
+    }
     .meta{font-size:12px;color:var(--muted);line-height:1.35}
     textarea.big{
       border-radius:14px;
-      min-height:260px;
-      max-height:420px;
+      min-height:260px;max-height:420px;
       resize:vertical;
-      padding:12px 12px;
+      padding:12px;
       font-size:13px;
       line-height:1.55;
+      background:#fff;
     }
     @media (max-width: 900px){ textarea.big{min-height:220px} }
 
     .footerRow{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
       margin-top:12px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:space-between;
-      align-items:center;
+      padding-top:12px;
+      border-top:1px solid rgba(15,23,42,.10);
     }
-    .hint{font-size:12px;color:var(--muted);line-height:1.35;margin-top:8px}
+
     .toast{
       display:none;
       margin-top:10px;
@@ -235,107 +180,49 @@
 <body>
 <div class="app-shell">
 
-  <!-- HEADER -->
-  <div class="card hero">
-    <div class="hero-inner">
-      <div class="brand">
-        <h1>PhysioNote</h1>
-        <div class="sub">
-          Voice-first Dokumentation als Integration-Layer. Workflow: <b>Start Listening</b> → <span class="mono">„Öffne Anamnese“</span> → sprechen → <span class="mono">„Schließe Feld“</span> → am Ende PDF / Save-Payload.
+  <!-- TOP: Patient + Session type/date + Voice controls -->
+  <div class="card">
+    <div class="topbar">
+      <div>
+        <label for="patientSelect">Patient auswählen</label>
+        <select id="patientSelect"></select>
+        <div class="meta" id="patientMeta" style="margin-top:6px"></div>
+      </div>
+
+      <div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+          <div style="flex:1;min-width:200px">
+            <label for="sessionType">Sitzungstyp</label>
+            <select id="sessionType">
+              <option value="initial">Erstbefund</option>
+              <option value="followup">Folgetermin</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:200px">
+            <label for="sessionDate">Datum</label>
+            <input id="sessionDate" type="date" />
+          </div>
         </div>
       </div>
 
-      <div class="right">
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
         <div class="pill" title="Mikrofonstatus">
           <span class="dot" id="micDot"></span>
           <span id="micText">Mic: OFF</span>
         </div>
-        <div class="pill" title="Aktives Feld">
-          <span>Active:</span>
-          <span class="mono" id="activeFieldLabel">—</span>
+        <div class="btnrow">
+          <button class="btn btn-primary" id="btnStart">🎙️ Start</button>
+          <button class="btn btn-danger" id="btnStop">Stop</button>
         </div>
       </div>
     </div>
 
-    <div class="status" id="status">
-      Status: Bereit. Starte Listening, dann sag z.B. <span class="mono">„Öffne Anamnese“</span>.
-      <div style="margin-top:6px">
-        Shortcuts: <span class="kbd">Space</span> Start/Stop · <span class="kbd">Esc</span> Schließe Feld
-      </div>
-    </div>
+    <div class="toast" id="toast"></div>
   </div>
 
-  <!-- TOP: PATIENT SELECT + VOICE CONTROLS -->
+  <!-- Tabs + One panel (true tab UI) -->
   <div class="card">
-    <div class="top-grid">
-      <div>
-        <label for="patientSelect">Patient auswählen</label>
-        <select id="patientSelect"></select>
-        <div class="hint" id="patientMeta"></div>
-      </div>
-
-      <div>
-        <div class="row" style="gap:12px">
-          <div class="btnrow" style="justify-content:flex-start">
-            <button class="btn btn-primary" id="btnStart">🎙️ Start Listening</button>
-            <button class="btn btn-danger" id="btnStop">⏹️ Stop</button>
-            <button class="btn btn-ghost" id="btnCloseField">✖️ Schließe Feld</button>
-          </div>
-          <div class="btnrow">
-            <button class="btn btn-ghost" id="btnCopy">📋 Kopieren (Feld)</button>
-            <button class="btn btn-gold" id="btnPdf">📄 PDF</button>
-            <button class="btn btn-ghost" id="btnClear">🧼 Alles leeren</button>
-          </div>
-        </div>
-
-        <div class="hint">
-          Voice-Befehle:
-          <span class="kbd">Öffne Anamnese</span>
-          <span class="kbd">Öffne Befund</span>
-          <span class="kbd">Öffne Diagnose</span>
-          <span class="kbd">Öffne Therapieplan</span>
-          <span class="kbd">Öffne Verlauf</span>
-          <span class="kbd">Öffne Epikrise</span>
-          <span class="kbd">Öffne Notizen</span>
-          · <span class="kbd">Schließe Feld</span>
-          · <span class="kbd">Leeren</span>
-          · <span class="kbd">Alles leeren</span>
-          · <span class="kbd">PDF</span>
-          · <span class="kbd">Stop</span>
-        </div>
-
-        <div class="toast" id="toast"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SESSION -->
-  <div class="card">
-    <h3 class="section-title">Sitzung</h3>
-
-    <div class="grid-session-head">
-      <div class="left">
-        <div class="field">
-          <label for="sessionType">Sitzungstyp</label>
-          <select id="sessionType">
-            <option value="initial">Erstbefund</option>
-            <option value="followup">Folgetermin</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="sessionDate">Datum</label>
-          <input id="sessionDate" type="date" />
-        </div>
-      </div>
-
-      <div class="btnrow">
-        <button class="btn btn-primary" id="btnSave">✅ An THEORG senden</button>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <div class="tabs" id="tabs">
+    <div class="tabs" id="tabs" aria-label="Dokumentations-Tabs">
       <div class="tab active" data-tab="anamnese">Anamnese</div>
       <div class="tab" data-tab="befund">Befund</div>
       <div class="tab" data-tab="diagnose">Diagnose</div>
@@ -345,32 +232,36 @@
       <div class="tab" data-tab="notizen">Notizen</div>
     </div>
 
-    <!-- Panel -->
     <div class="panel">
       <div class="panelHead">
         <div>
-          <strong id="panelTitle">Anamnese</strong>
+          <div class="title" id="panelTitle">Anamnese</div>
           <div class="meta" id="panelMeta">Vorgeschichte, Alltag, Verlauf, bisherige Behandlungen.</div>
         </div>
         <div class="pill">
-          <span>Target:</span> <span class="mono" id="panelTarget">anamnese</span>
+          <span>Aktiv:</span> <span class="mono" id="activeFieldLabel">—</span>
         </div>
       </div>
 
-      <textarea id="taAnamnese" class="big" placeholder="Sage: „Öffne Anamnese“ – dann wird hier transkribiert."></textarea>
-      <textarea id="taBefund" class="big hidden" placeholder="Sage: „Öffne Befund“ – dann wird hier transkribiert."></textarea>
-      <textarea id="taDiagnose" class="big hidden" placeholder="Sage: „Öffne Diagnose“ – dann wird hier transkribiert."></textarea>
-      <textarea id="taTherapieplan" class="big hidden" placeholder="Sage: „Öffne Therapieplan“ – dann wird hier transkribiert."></textarea>
-      <textarea id="taVerlauf" class="big hidden" placeholder="Sage: „Öffne Verlauf“ – dann wird hier transkribiert."></textarea>
-      <textarea id="taEpikrise" class="big hidden" placeholder="Sage: „Öffne Epikrise“ – dann wird hier transkribiert."></textarea>
-      <textarea id="taNotizen" class="big hidden" placeholder="Sage: „Öffne Notizen“ – dann wird hier transkribiert."></textarea>
+      <!-- exactly ONE textarea visible at a time (tabbed) -->
+      <textarea id="taAnamnese" class="big" placeholder="„Öffne Anamnese“ → sprechen → „Schließe Feld“"></textarea>
+      <textarea id="taBefund" class="big hidden" placeholder="„Öffne Befund“ → sprechen → „Schließe Feld“"></textarea>
+      <textarea id="taDiagnose" class="big hidden" placeholder="„Öffne Diagnose“ → sprechen → „Schließe Feld“"></textarea>
+      <textarea id="taTherapieplan" class="big hidden" placeholder="„Öffne Therapieplan“ → sprechen → „Schließe Feld“"></textarea>
+      <textarea id="taVerlauf" class="big hidden" placeholder="„Öffne Verlauf“ → sprechen → „Schließe Feld“"></textarea>
+      <textarea id="taEpikrise" class="big hidden" placeholder="„Öffne Epikrise“ → sprechen → „Schließe Feld“"></textarea>
+      <textarea id="taNotizen" class="big hidden" placeholder="„Öffne Notizen“ → sprechen → „Schließe Feld“"></textarea>
 
       <div class="footerRow">
-        <div class="meta">
-          Tipp: Wenn kein Feld offen ist, wird nichts geschrieben. Das verhindert “Durcheinander”.
-        </div>
         <div class="btnrow">
+          <button class="btn btn-ghost" id="btnCloseField">✖️ Schließe Feld</button>
           <button class="btn btn-ghost" id="btnFieldClear">🧽 Feld leeren</button>
+          <button class="btn btn-ghost" id="btnClear">🧼 Alles leeren</button>
+        </div>
+
+        <div class="btnrow">
+          <button class="btn btn-ghost" id="btnSave">✅ An THEORG senden</button>
+          <button class="btn btn-gold" id="btnPdf">📄 PDF generieren</button>
         </div>
       </div>
     </div>
@@ -379,7 +270,7 @@
 </div>
 
 <script>
-  // ---------- UTIL ----------
+  // ===== UTIL =====
   const $ = (id) => document.getElementById(id);
 
   function todayISO(){
@@ -403,16 +294,12 @@
     t.textContent = msg;
     t.classList.add("show");
     clearTimeout(showToast._tm);
-    showToast._tm = setTimeout(()=>t.classList.remove("show"), 2600);
+    showToast._tm = setTimeout(()=>t.classList.remove("show"), 2400);
   }
 
-  function setStatus(html){
-    $("status").innerHTML = "Status: " + html;
-  }
-
-  // ---------- PATIENT MOCK (replace later via THEORG adapter) ----------
+  // ===== PATIENT MOCK (replace later) =====
   const patients = [
-    { id:"thg-1001", name:"Max Muster", year:1987, note:"Erstkontakt / Knie" },
+    { id:"thg-1001", name:"Max Muster", year:1987, note:"Knie / Erstkontakt" },
     { id:"thg-1002", name:"Laura Beispiel", year:1994, note:"Rücken / Verlauf" },
     { id:"thg-1003", name:"Tim Demo", year:1979, note:"Schulter / Post-OP" },
     { id:"thg-1004", name:"Sara Test", year:1990, note:"Nacken / Stress" },
@@ -425,7 +312,6 @@
     opt0.value = "";
     opt0.textContent = "— Patient auswählen —";
     sel.appendChild(opt0);
-
     for(const p of patients){
       const o = document.createElement("option");
       o.value = p.id;
@@ -435,14 +321,12 @@
   }
 
   function updatePatientMeta(){
-    const sel = $("patientSelect");
-    const p = patients.find(x => x.id === sel.value);
-    $("patientMeta").textContent = p
-      ? `THEORG-ID: ${p.id} · ${p.note || ""}`.trim()
-      : "Wähle einen Patienten aus THEORG (Mock).";
+    const id = $("patientSelect").value;
+    const p = patients.find(x => x.id === id);
+    $("patientMeta").textContent = p ? `THEORG-ID: ${p.id} · ${p.note}` : "";
   }
 
-  // ---------- SESSION / TABS ----------
+  // ===== TABS / FIELDS =====
   const tabMeta = {
     anamnese: "Vorgeschichte, Alltag, Verlauf, bisherige Behandlungen.",
     befund: "Status: Schmerz, ROM, Kraft, Funktion, Tests, Palpation.",
@@ -450,7 +334,7 @@
     therapieplan: "Ziele, Maßnahmen, Frequenz, Heimübungen.",
     verlauf: "Reaktion auf Therapie, Veränderungen, Anpassungen.",
     epikrise: "Zusammenfassung, Empfehlung, next steps.",
-    notizen: "Freie Notizen (z.B. Kommunikation, Besonderheiten)."
+    notizen: "Freie Notizen."
   };
 
   const textareas = {
@@ -463,41 +347,8 @@
     notizen: $("taNotizen")
   };
 
-  let activeTab = "anamnese";
-  let activeFieldOpen = false; // "Öffne X" sets true; "Schließe Feld" sets false
-  let bufferInterim = "";
-
-  function setActiveTab(tab){
-    activeTab = tab;
-
-    // tabs UI
-    document.querySelectorAll(".tab").forEach(el => {
-      el.classList.toggle("active", el.dataset.tab === tab);
-    });
-
-    // textarea panels
-    Object.entries(textareas).forEach(([k, ta]) => {
-      ta.classList.toggle("hidden", k !== tab);
-    });
-
-    $("panelTitle").textContent = tabLabel(tab);
-    $("panelMeta").textContent = tabMeta[tab] || "";
-    $("panelTarget").textContent = tab;
-
-    // update filled indicator
-    updateFilledTabs();
-
-    // focus only if field open
-    if(activeFieldOpen){
-      textareas[tab].focus();
-      textareas[tab].scrollTop = textareas[tab].scrollHeight;
-    }
-
-    $("activeFieldLabel").textContent = activeFieldOpen ? tab : "—";
-  }
-
-  function tabLabel(tab){
-    const map = {
+  function tabLabel(k){
+    return ({
       anamnese:"Anamnese",
       befund:"Befund",
       diagnose:"Diagnose",
@@ -505,60 +356,78 @@
       verlauf:"Verlauf",
       epikrise:"Epikrise",
       notizen:"Notizen"
-    };
-    return map[tab] || tab;
+    })[k] || k;
   }
 
+  let activeTab = "anamnese";
+  let fieldOpen = false;
+
   function updateFilledTabs(){
-    document.querySelectorAll(".tab").forEach(el => {
+    document.querySelectorAll(".tab").forEach(el=>{
       const k = el.dataset.tab;
       const has = (textareas[k].value || "").trim().length > 0;
       el.classList.toggle("filled", has);
     });
   }
 
+  function setActiveTab(tab){
+    activeTab = tab;
+
+    document.querySelectorAll(".tab").forEach(el=>{
+      el.classList.toggle("active", el.dataset.tab === tab);
+    });
+
+    Object.entries(textareas).forEach(([k, ta])=>{
+      ta.classList.toggle("hidden", k !== tab);
+    });
+
+    $("panelTitle").textContent = tabLabel(tab);
+    $("panelMeta").textContent = tabMeta[tab] || "";
+    $("activeFieldLabel").textContent = fieldOpen ? tabLabel(tab) : "—";
+
+    if(fieldOpen){
+      textareas[tab].focus();
+      textareas[tab].scrollTop = textareas[tab].scrollHeight;
+    }
+
+    updateFilledTabs();
+  }
+
   function openField(tab){
-    activeFieldOpen = true;
+    fieldOpen = true;
     setActiveTab(tab);
-    $("activeFieldLabel").textContent = tab;
-    setStatus(`<b>Aktives Feld:</b> ${tabLabel(tab)} · Sprich jetzt.`);
-    showToast(`Feld geöffnet: ${tabLabel(tab)}`);
+    $("activeFieldLabel").textContent = tabLabel(tab);
+    showToast(`Öffne ${tabLabel(tab)}`);
   }
 
   function closeField(){
-    activeFieldOpen = false;
-    bufferInterim = "";
+    fieldOpen = false;
     $("activeFieldLabel").textContent = "—";
-    setStatus(`Feld geschlossen. Sag <span class="mono">„Öffne …“</span> um zu diktieren.`);
     showToast("Feld geschlossen");
   }
 
-  function clearActiveField(){
+  function clearField(){
     textareas[activeTab].value = "";
-    bufferInterim = "";
     updateFilledTabs();
     showToast(`${tabLabel(activeTab)} geleert`);
   }
 
   function clearAll(){
     Object.values(textareas).forEach(ta => ta.value = "");
-    bufferInterim = "";
     updateFilledTabs();
     closeField();
     showToast("Alles geleert");
   }
 
-  // tabs click (manual allowed)
   $("tabs").addEventListener("click", (e)=>{
-    const t = e.target.closest(".tab");
-    if(!t) return;
-    setActiveTab(t.dataset.tab);
+    const el = e.target.closest(".tab");
+    if(!el) return;
+    setActiveTab(el.dataset.tab);
   });
 
-  // typing updates "filled"
   Object.values(textareas).forEach(ta => ta.addEventListener("input", updateFilledTabs));
 
-  // ---------- VOICE (Web Speech API) ----------
+  // ===== VOICE =====
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null;
   let listening = false;
@@ -569,14 +438,9 @@
     $("micText").textContent = on ? "Mic: ON" : "Mic: OFF";
   }
 
-  function supportsSpeech(){
-    return !!SpeechRecognition;
-  }
-
   function startListening(){
-    if(!supportsSpeech()){
-      setStatus(`⚠️ SpeechRecognition nicht verfügbar. Bitte Chrome/Edge verwenden.`);
-      showToast("SpeechRecognition nicht verfügbar");
+    if(!SpeechRecognition){
+      showToast("SpeechRecognition nicht verfügbar (Chrome/Edge).");
       return;
     }
     if(listening) return;
@@ -588,36 +452,27 @@
 
     rec.onstart = () => {
       setMic(true);
-      setStatus(`Listening ON. Sag z.B. <span class="mono">„Öffne Anamnese“</span>.`);
       showToast("Listening ON");
     };
 
-    rec.onerror = (e) => {
+    rec.onerror = () => {
       setMic(false);
-      setStatus(`⚠️ Mikrofon-Fehler: <span class="mono">${e && e.error ? e.error : "unbekannt"}</span>`);
       showToast("Mikrofon-Fehler");
     };
 
     rec.onend = () => {
-      // stays OFF unless restarted
       setMic(false);
-      bufferInterim = "";
-      if(activeFieldOpen) {
-        // leave current content
-      }
-      setStatus(`Listening OFF.`);
     };
 
     rec.onresult = (event) => {
-      for(let i = event.resultIndex; i < event.results.length; i++){
+      for(let i=event.resultIndex;i<event.results.length;i++){
         const res = event.results[i];
-        const transcript = (res[0] && res[0].transcript ? res[0].transcript : "").trim();
-        if(!transcript) continue;
+        const raw = (res[0] && res[0].transcript ? res[0].transcript : "").trim();
+        if(!raw) continue;
 
-        // commands should NOT end up in textareas
-        const t = normalize(transcript);
+        const t = normalize(raw);
 
-        // --- commands
+        // Commands
         const mOpen = t.match(/^oeffne\s+(anamnese|befund|diagnose|therapieplan|therapie plan|verlauf|epikrise|notizen|notiz)\b/);
         if(mOpen){
           const v = mOpen[1];
@@ -638,92 +493,59 @@
           continue;
         }
 
-        if(t === "stop" || t === "stopp" || t === "stop listening" || t === "stopp listening"){
-          stopListening();
-          continue;
-        }
-
-        if(t === "leeren" || t === "feld leeren"){
-          clearActiveField();
-          continue;
-        }
-
         if(t === "alles leeren" || t === "reset"){
           clearAll();
           continue;
         }
 
-        if(t === "pdf" || t === "export pdf" || t === "pdf exportieren"){
+        if(t === "feld leeren" || t === "leeren"){
+          clearField();
+          continue;
+        }
+
+        if(t === "pdf" || t === "pdf generieren" || t === "export pdf"){
           exportPdf();
           continue;
         }
 
-        if(t === "kopieren" || t === "copy"){
-          copyActive();
+        if(t === "stop" || t === "stopp"){
+          stopListening();
           continue;
         }
 
-        // --- dictation (ONLY if field is open)
-        if(!activeFieldOpen){
-          if(res.isFinal){
-            setStatus(`Ich höre, aber kein Feld ist offen. Sag <span class="mono">„Öffne …“</span>.`);
-          }
-          continue;
-        }
+        // Dictation (only if field open)
+        if(!fieldOpen) continue;
 
         if(res.isFinal){
           const cur = (textareas[activeTab].value || "").trim();
-          const next = (cur ? (cur + " ") : "") + transcript.trim();
+          const next = (cur ? (cur + " ") : "") + raw.trim();
           textareas[activeTab].value = next;
-          bufferInterim = "";
           textareas[activeTab].scrollTop = textareas[activeTab].scrollHeight;
           updateFilledTabs();
-        } else {
-          // optional: show interim by temporarily appending (kept simple: ignore interim to keep clean UI)
         }
       }
     };
 
-    try { rec.start(); } catch(e){
-      setStatus(`⚠️ Konnte Listening nicht starten: ${e && e.message ? e.message : "unbekannt"}`);
-      showToast("Start fehlgeschlagen");
-    }
+    try{ rec.start(); } catch(e){ showToast("Start fehlgeschlagen"); }
   }
 
   function stopListening(){
     if(rec){
-      try{ rec.onresult = null; } catch(e){}
       try{ rec.stop(); } catch(e){}
     }
     rec = null;
     setMic(false);
-    bufferInterim = "";
-    setStatus(`Listening OFF.`);
     showToast("Listening OFF");
   }
 
-  // ---------- ACTIONS ----------
-  async function copyActive(){
-    const val = (textareas[activeTab].value || "").trim();
-    if(!val){ showToast("Feld ist leer"); return; }
-    try{
-      await navigator.clipboard.writeText(val);
-      showToast(`${tabLabel(activeTab)} kopiert`);
-    } catch(e){
-      textareas[activeTab].focus();
-      textareas[activeTab].select();
-      document.execCommand("copy");
-      showToast(`${tabLabel(activeTab)} kopiert`);
-    }
-  }
-
+  // ===== THEORG MOCK SAVE =====
   function buildPayload(){
-    const patientId = $("patientSelect").value;
-    const patient = patients.find(p => p.id === patientId) || null;
+    const pid = $("patientSelect").value;
+    const p = patients.find(x => x.id === pid) || null;
 
     return {
       integration: "THEORG",
-      patient: patient ? { id: patient.id, name: patient.name, year: patient.year } : null,
+      patient: p ? { id:p.id, name:p.name, year:p.year } : null,
       session: {
         type: $("sessionType").value,
         date: $("sessionDate").value || null,
@@ -734,7 +556,7 @@
           therapieplan: textareas.therapieplan.value.trim(),
           verlauf: textareas.verlauf.value.trim(),
           epikrise: textareas.epikrise.value.trim(),
-          notizen: textareas.notizen.value.trim(),
+          notizen: textareas.notizen.value.trim()
         }
       },
       createdAt: new Date().toISOString()
@@ -745,21 +567,17 @@
     const payload = buildPayload();
     if(!payload.patient){
       showToast("Bitte Patient auswählen");
-      setStatus(`Bitte zuerst einen Patienten auswählen.`);
       return;
     }
-
-    // Placeholder: here you would POST to your connector:
-    // fetch("/api/theorg/save", { method:"POST", headers:{...}, body: JSON.stringify(payload) })
     console.log("THEORG payload (mock):", payload);
-    setStatus(`✅ Payload erstellt (Mock). In echter Integration würde jetzt an THEORG gesendet werden.`);
     showToast("An THEORG gesendet (Mock)");
   }
 
+  // ===== PDF =====
   function exportPdf(){
     const payload = buildPayload();
     const now = new Date().toLocaleString("de-DE");
-    const safe = (s) => (s||"")
+    const esc = (s) => (s||"")
       .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
       .replace(/\n/g,"<br/>");
 
@@ -777,66 +595,56 @@
       ["Notizen", payload.session.fields.notizen],
     ].map(([h,v]) => `
       <h2>${h}</h2>
-      <div class="box">${safe(v && v.trim() ? v : "—")}</div>
+      <div class="box">${esc(v && v.trim() ? v : "—")}</div>
     `).join("");
 
     const w = window.open("", "_blank");
-    const html = `
-      <!doctype html>
-      <html><head>
-        <meta charset="utf-8"/>
-        <meta name="viewport" content="width=device-width,initial-scale=1"/>
-        <title>PhysioNote – PDF</title>
-        <style>
-          body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:26px;color:#111827}
-          h1{margin:0;font-size:20px;color:#0f172a}
-          .meta{margin-top:6px;color:#6b7280;font-size:12px}
-          h2{font-size:14px;margin:18px 0 8px 0;color:#0f172a}
-          .box{border:1px solid #d1d5db;border-radius:12px;padding:12px;background:#f9fafb;line-height:1.55}
-          .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-          .k{color:#6b7280;font-size:12px}
-          .v{font-size:12px}
-          @media print {.meta{margin-bottom:12px}}
-          @media (max-width:700px){.grid{grid-template-columns:1fr}}
-        </style>
-      </head>
-      <body>
+    w.document.open();
+    w.document.write(`
+      <!doctype html><html><head>
+      <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+      <title>PhysioNote – PDF</title>
+      <style>
+        body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:26px;color:#111827}
+        h1{margin:0;font-size:20px;color:#0f172a}
+        .meta{margin-top:6px;color:#6b7280;font-size:12px}
+        h2{font-size:14px;margin:18px 0 8px 0;color:#0f172a}
+        .box{border:1px solid #d1d5db;border-radius:12px;padding:12px;background:#f9fafb;line-height:1.55}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+        .k{color:#6b7280;font-size:12px}
+        .v{font-size:12px}
+        @media (max-width:700px){.grid{grid-template-columns:1fr}}
+      </style>
+      </head><body>
         <h1>Dokumentation</h1>
         <div class="meta">PhysioNote · ${now}</div>
-
         <div class="grid">
-          <div><div class="k">Patient</div><div class="v">${safe(patientLine)}</div></div>
-          <div><div class="k">Sitzung</div><div class="v">${safe(payload.session.type)} · ${safe(payload.session.date || "—")}</div></div>
+          <div><div class="k">Patient</div><div class="v">${esc(patientLine)}</div></div>
+          <div><div class="k">Sitzung</div><div class="v">${esc(payload.session.type)} · ${esc(payload.session.date || "—")}</div></div>
         </div>
-
         ${blocks}
-        <script>window.onload = () => window.print();<\/script>
+        <script>window.onload=()=>window.print();<\/script>
       </body></html>
-    `;
-    w.document.open();
-    w.document.write(html);
+    `);
     w.document.close();
-
     showToast("PDF geöffnet");
   }
 
-  // ---------- WIRE UI ----------
+  // ===== WIRE UI =====
   $("btnStart").addEventListener("click", startListening);
   $("btnStop").addEventListener("click", stopListening);
   $("btnCloseField").addEventListener("click", closeField);
-  $("btnCopy").addEventListener("click", copyActive);
-  $("btnPdf").addEventListener("click", exportPdf);
+  $("btnFieldClear").addEventListener("click", clearField);
   $("btnClear").addEventListener("click", clearAll);
-  $("btnFieldClear").addEventListener("click", clearActiveField);
   $("btnSave").addEventListener("click", sendToTHEORG);
-
+  $("btnPdf").addEventListener("click", exportPdf);
   $("patientSelect").addEventListener("change", updatePatientMeta);
 
-  // keyboard shortcuts
+  // keyboard shortcuts (optional but nice)
   document.addEventListener("keydown", (e)=>{
     if(e.code === "Space"){
       e.preventDefault();
-      if(listening) stopListening(); else startListening();
+      listening ? stopListening() : startListening();
     }
     if(e.code === "Escape"){
       e.preventDefault();
@@ -844,19 +652,12 @@
     }
   });
 
-  // ---------- INIT ----------
+  // ===== INIT =====
   renderPatients();
   updatePatientMeta();
   $("sessionDate").value = todayISO();
   setActiveTab("anamnese");
   closeField();
-
-  if(!supportsSpeech()){
-    setStatus(`⚠️ SpeechRecognition nicht verfügbar. Bitte Chrome/Edge verwenden.`);
-    showToast("SpeechRecognition nicht verfügbar");
-  } else {
-    setStatus(`Bereit. Starte Listening, dann sag <span class="mono">„Öffne Anamnese“</span>.`);
-  }
 </script>
 </body>
 </html>
