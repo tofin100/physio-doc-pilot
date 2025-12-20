@@ -6,7 +6,7 @@
   <title>PhysioNote</title>
 
   <style>
-    :root {
+    :root{
       --bg:#f5f5f7;
       --card:#ffffff;
       --border:#d1d5db;
@@ -40,28 +40,22 @@
     .hidden{display:none!important}
 
     /* Header */
-    .hero{
-      position:relative; overflow:hidden;
-      padding:18px 20px;
-    }
+    .hero{position:relative; overflow:hidden; padding:18px 20px}
     .hero::before{
       content:"";
       position:absolute; inset:-40%;
       background:
-        radial-gradient(circle at 15% 0%, rgba(6,182,212,.20), transparent 55%),
-        radial-gradient(circle at 85% 10%, rgba(15,23,42,.08), transparent 60%);
+        radial-gradient(circle at 15% 0%, rgba(6,182,212,.22), transparent 55%),
+        radial-gradient(circle at 85% 10%, rgba(15,23,42,.09), transparent 60%);
       pointer-events:none;
     }
     .hero-inner{
       position:relative; z-index:1;
-      display:flex; justify-content:space-between; align-items:flex-start;
-      gap:14px; flex-wrap:wrap;
+      display:flex; justify-content:space-between; align-items:center;
+      gap:12px; flex-wrap:wrap;
     }
-    .brand h1{margin:0;font-size:28px;font-weight:850;letter-spacing:-.03em;color:var(--accent-dark)}
-    .brand .sub{margin-top:6px;font-size:13px;color:var(--muted);max-width:760px;line-height:1.35}
-    .right{
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
-    }
+    .brand h1{margin:0;font-size:28px;font-weight:900;letter-spacing:-.03em;color:var(--accent-dark)}
+    .right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 
     .pill{
       display:inline-flex;align-items:center;gap:8px;
@@ -94,7 +88,7 @@
 
     .top-grid{
       display:grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
       gap:14px;
       align-items:end;
     }
@@ -107,7 +101,7 @@
       border:none;
       padding:9px 14px;
       font-size:12px;
-      font-weight:700;
+      font-weight:800;
       cursor:pointer;
       display:inline-flex;
       align-items:center;
@@ -132,14 +126,14 @@
     .btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
 
     .status{
-      margin-top:10px;
+      margin-top:12px;
       border-radius:14px;
       padding:10px 12px;
       border:1px solid rgba(15,23,42,.10);
       background:#f9fafb;
       font-size:12px;
       color:var(--muted);
-      line-height:1.35;
+      line-height:1.45;
       word-break:break-word;
     }
     .kbd{
@@ -151,8 +145,8 @@
       color:#0f172a;
     }
 
-    /* Session */
-    .section-title{margin:0 0 10px 0;font-size:14px;font-weight:700;color:var(--accent-dark)}
+    /* Session / Tabs */
+    .section-title{margin:0 0 10px 0;font-size:14px;font-weight:800;color:var(--accent-dark)}
     .grid-session-head{
       display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
       margin-bottom:10px;
@@ -161,7 +155,6 @@
     .field{min-width:210px}
     @media (max-width: 700px){ .field{min-width: 100%} }
 
-    /* Tabs */
     .tabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px}
     .tab{
       border-radius:999px;
@@ -216,7 +209,7 @@
       justify-content:space-between;
       align-items:center;
     }
-    .hint{font-size:12px;color:var(--muted);line-height:1.35;margin-top:8px}
+    .hint{font-size:12px;color:var(--muted);line-height:1.45;margin-top:8px}
     .toast{
       display:none;
       margin-top:10px;
@@ -226,26 +219,38 @@
       background:rgba(6,182,212,.08);
       color:#0f172a;
       font-size:12px;
-      line-height:1.35;
+      line-height:1.45;
     }
     .toast.show{display:block}
+
+    /* Bottom actions */
+    .actions-bottom{
+      margin-top:14px;
+      padding-top:14px;
+      border-top:1px solid rgba(15,23,42,.08);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+    }
   </style>
 </head>
 
 <body>
 <div class="app-shell">
 
-  <!-- HEADER -->
+  <!-- HEADER (nur Titel + Listening oben) -->
   <div class="card hero">
     <div class="hero-inner">
       <div class="brand">
         <h1>PhysioNote</h1>
-        <div class="sub">
-          Voice-first Dokumentation als Integration-Layer. Workflow: <b>Start Listening</b> → <span class="mono">„Öffne Anamnese“</span> → sprechen → <span class="mono">„Schließe Feld“</span> → am Ende PDF / Save-Payload.
-        </div>
       </div>
 
       <div class="right">
+        <button class="btn btn-primary" id="btnStart">🎙️ Start Listening</button>
+        <button class="btn btn-danger" id="btnStop">⏹️ Stop</button>
+
         <div class="pill" title="Mikrofonstatus">
           <span class="dot" id="micDot"></span>
           <span id="micText">Mic: OFF</span>
@@ -258,14 +263,23 @@
     </div>
 
     <div class="status" id="status">
-      Status: Bereit. Starte Listening, dann sag z.B. <span class="mono">„Öffne Anamnese“</span>.
+      Status: Bereit. Du kannst alles per Sprache steuern.
+      <div style="margin-top:6px">
+        Beispiele:
+        <span class="kbd">„Öffne Anamnese“</span>
+        <span class="kbd">„Wähle Patient Max Muster“</span>
+        <span class="kbd">„Sitzung Erstbefund“</span>
+        <span class="kbd">„Datum heute“</span>
+        <span class="kbd">„Schließe Feld“</span>
+        <span class="kbd">„PDF“</span>
+      </div>
       <div style="margin-top:6px">
         Shortcuts: <span class="kbd">Space</span> Start/Stop · <span class="kbd">Esc</span> Schließe Feld
       </div>
     </div>
   </div>
 
-  <!-- TOP: PATIENT SELECT + VOICE CONTROLS -->
+  <!-- PATIENT + SESSION (direkt unter Titel) -->
   <div class="card">
     <div class="top-grid">
       <div>
@@ -276,63 +290,40 @@
 
       <div>
         <div class="row" style="gap:12px">
-          <div class="btnrow" style="justify-content:flex-start">
-            <button class="btn btn-primary" id="btnStart">🎙️ Start Listening</button>
-            <button class="btn btn-danger" id="btnStop">⏹️ Stop</button>
-            <button class="btn btn-ghost" id="btnCloseField">✖️ Schließe Feld</button>
+          <div class="field" style="min-width:210px;flex:1">
+            <label for="sessionType">Sitzungstyp</label>
+            <select id="sessionType">
+              <option value="initial">Erstbefund</option>
+              <option value="followup">Folgetermin</option>
+            </select>
           </div>
-          <div class="btnrow">
-            <button class="btn btn-ghost" id="btnCopy">📋 Kopieren (Feld)</button>
-            <button class="btn btn-gold" id="btnPdf">📄 PDF</button>
-            <button class="btn btn-ghost" id="btnClear">🧼 Alles leeren</button>
-          </div>
-        </div>
 
-        <div class="hint">
-          Voice-Befehle:
-          <span class="kbd">Öffne Anamnese</span>
-          <span class="kbd">Öffne Befund</span>
-          <span class="kbd">Öffne Diagnose</span>
-          <span class="kbd">Öffne Therapieplan</span>
-          <span class="kbd">Öffne Verlauf</span>
-          <span class="kbd">Öffne Epikrise</span>
-          <span class="kbd">Öffne Notizen</span>
-          · <span class="kbd">Schließe Feld</span>
-          · <span class="kbd">Leeren</span>
-          · <span class="kbd">Alles leeren</span>
-          · <span class="kbd">PDF</span>
-          · <span class="kbd">Stop</span>
+          <div class="field" style="min-width:210px;flex:1">
+            <label for="sessionDate">Datum</label>
+            <input id="sessionDate" type="date" />
+          </div>
         </div>
 
         <div class="toast" id="toast"></div>
+
+        <div class="hint">
+          Voice-Befehle (Auswahl):
+          <span class="kbd">„Wähle Patient …“</span>
+          <span class="kbd">„Nächster Patient“</span>
+          <span class="kbd">„Vorheriger Patient“</span>
+          <span class="kbd">„Sitzung Erstbefund“</span>
+          <span class="kbd">„Sitzung Folgetermin“</span>
+          <span class="kbd">„Datum heute/gestern/morgen“</span>
+          <span class="kbd">„Öffne Befund“</span>
+          <span class="kbd">„Schließe Feld“</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- SESSION -->
+  <!-- SESSION + TABS (unten perfekt: bleibt) -->
   <div class="card">
-    <h3 class="section-title">Sitzung</h3>
-
-    <div class="grid-session-head">
-      <div class="left">
-        <div class="field">
-          <label for="sessionType">Sitzungstyp</label>
-          <select id="sessionType">
-            <option value="initial">Erstbefund</option>
-            <option value="followup">Folgetermin</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="sessionDate">Datum</label>
-          <input id="sessionDate" type="date" />
-        </div>
-      </div>
-
-      <div class="btnrow">
-        <button class="btn btn-primary" id="btnSave">✅ An THEORG senden</button>
-      </div>
-    </div>
+    <h3 class="section-title">Dokumentation</h3>
 
     <!-- Tabs -->
     <div class="tabs" id="tabs">
@@ -370,8 +361,23 @@
           Tipp: Wenn kein Feld offen ist, wird nichts geschrieben. Das verhindert “Durcheinander”.
         </div>
         <div class="btnrow">
+          <button class="btn btn-ghost" id="btnCloseField">✖️ Schließe Feld</button>
           <button class="btn btn-ghost" id="btnFieldClear">🧽 Feld leeren</button>
         </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ACTIONS (alles ganz nach unten) -->
+    <div class="actions-bottom">
+      <div class="meta">
+        Aktionen:
+        <span class="mono">„PDF“</span> · <span class="mono">„Speichern“</span> · <span class="mono">„Kopieren“</span> · <span class="mono">„Alles leeren“</span>
+      </div>
+      <div class="btnrow">
+        <button class="btn btn-ghost" id="btnCopy">📋 Kopieren (Feld)</button>
+        <button class="btn btn-ghost" id="btnClear">🧼 Alles leeren</button>
+        <button class="btn btn-gold" id="btnPdf">📄 PDF generieren</button>
+        <button class="btn btn-primary" id="btnSave">✅ An THEORG senden</button>
       </div>
     </div>
   </div>
@@ -384,6 +390,14 @@
 
   function todayISO(){
     const d = new Date();
+    const tz = d.getTimezoneOffset();
+    const local = new Date(d.getTime() - tz*60000);
+    return local.toISOString().slice(0,10);
+  }
+
+  function shiftISO(days){
+    const d = new Date();
+    d.setDate(d.getDate() + days);
     const tz = d.getTimezoneOffset();
     const local = new Date(d.getTime() - tz*60000);
     return local.toISOString().slice(0,10);
@@ -410,6 +424,46 @@
     $("status").innerHTML = "Status: " + html;
   }
 
+  function persist(){
+    try{
+      const payload = {
+        patientId: $("patientSelect").value || "",
+        sessionType: $("sessionType").value || "initial",
+        sessionDate: $("sessionDate").value || "",
+        fields: {
+          anamnese: textareas.anamnese.value,
+          befund: textareas.befund.value,
+          diagnose: textareas.diagnose.value,
+          therapieplan: textareas.therapieplan.value,
+          verlauf: textareas.verlauf.value,
+          epikrise: textareas.epikrise.value,
+          notizen: textareas.notizen.value,
+        },
+        activeTab
+      };
+      localStorage.setItem("physionote_state_v1", JSON.stringify(payload));
+    }catch(e){}
+  }
+
+  function restore(){
+    try{
+      const raw = localStorage.getItem("physionote_state_v1");
+      if(!raw) return;
+      const s = JSON.parse(raw);
+      if(s.sessionType) $("sessionType").value = s.sessionType;
+      if(s.sessionDate) $("sessionDate").value = s.sessionDate;
+      if(s.patientId) $("patientSelect").value = s.patientId;
+      if(s.fields){
+        for(const k of Object.keys(textareas)){
+          if(typeof s.fields[k] === "string") textareas[k].value = s.fields[k];
+        }
+      }
+      updatePatientMeta();
+      updateFilledTabs();
+      if(s.activeTab) setActiveTab(s.activeTab);
+    }catch(e){}
+  }
+
   // ---------- PATIENT MOCK (replace later via THEORG adapter) ----------
   const patients = [
     { id:"thg-1001", name:"Max Muster", year:1987, note:"Erstkontakt / Knie" },
@@ -434,15 +488,48 @@
     }
   }
 
+  function getSelectedPatientIndex(){
+    const id = $("patientSelect").value;
+    return patients.findIndex(p => p.id === id);
+  }
+
   function updatePatientMeta(){
     const sel = $("patientSelect");
     const p = patients.find(x => x.id === sel.value);
     $("patientMeta").textContent = p
       ? `THEORG-ID: ${p.id} · ${p.note || ""}`.trim()
       : "Wähle einen Patienten aus THEORG (Mock).";
+    persist();
   }
 
-  // ---------- SESSION / TABS ----------
+  function selectPatientByIndex(idx){
+    if(idx < 0 || idx >= patients.length) return false;
+    $("patientSelect").value = patients[idx].id;
+    updatePatientMeta();
+    showToast(`Patient: ${patients[idx].name}`);
+    setStatus(`Patient gesetzt: <b>${patients[idx].name}</b>`);
+    return true;
+  }
+
+  function findPatientByName(query){
+    const q = normalize(query);
+    if(!q) return null;
+
+    // match: full name includes query (for “max”, “max muster”, etc.)
+    const hits = patients
+      .map((p, i) => ({ p, i, n: normalize(p.name) }))
+      .filter(x => x.n.includes(q));
+
+    if(hits.length === 1) return hits[0];
+    if(hits.length > 1){
+      // prefer startsWith
+      const starts = hits.find(x => x.n.startsWith(q));
+      return starts || hits[0];
+    }
+    return null;
+  }
+
+  // ---------- TABS ----------
   const tabMeta = {
     anamnese: "Vorgeschichte, Alltag, Verlauf, bisherige Behandlungen.",
     befund: "Status: Schmerz, ROM, Kraft, Funktion, Tests, Palpation.",
@@ -464,37 +551,7 @@
   };
 
   let activeTab = "anamnese";
-  let activeFieldOpen = false; // "Öffne X" sets true; "Schließe Feld" sets false
-  let bufferInterim = "";
-
-  function setActiveTab(tab){
-    activeTab = tab;
-
-    // tabs UI
-    document.querySelectorAll(".tab").forEach(el => {
-      el.classList.toggle("active", el.dataset.tab === tab);
-    });
-
-    // textarea panels
-    Object.entries(textareas).forEach(([k, ta]) => {
-      ta.classList.toggle("hidden", k !== tab);
-    });
-
-    $("panelTitle").textContent = tabLabel(tab);
-    $("panelMeta").textContent = tabMeta[tab] || "";
-    $("panelTarget").textContent = tab;
-
-    // update filled indicator
-    updateFilledTabs();
-
-    // focus only if field open
-    if(activeFieldOpen){
-      textareas[tab].focus();
-      textareas[tab].scrollTop = textareas[tab].scrollHeight;
-    }
-
-    $("activeFieldLabel").textContent = activeFieldOpen ? tab : "—";
-  }
+  let activeFieldOpen = false;
 
   function tabLabel(tab){
     const map = {
@@ -517,6 +574,32 @@
     });
   }
 
+  function setActiveTab(tab){
+    activeTab = tab;
+
+    document.querySelectorAll(".tab").forEach(el => {
+      el.classList.toggle("active", el.dataset.tab === tab);
+    });
+
+    Object.entries(textareas).forEach(([k, ta]) => {
+      ta.classList.toggle("hidden", k !== tab);
+    });
+
+    $("panelTitle").textContent = tabLabel(tab);
+    $("panelMeta").textContent = tabMeta[tab] || "";
+    $("panelTarget").textContent = tab;
+
+    updateFilledTabs();
+
+    if(activeFieldOpen){
+      textareas[tab].focus();
+      textareas[tab].scrollTop = textareas[tab].scrollHeight;
+    }
+
+    $("activeFieldLabel").textContent = activeFieldOpen ? tab : "—";
+    persist();
+  }
+
   function openField(tab){
     activeFieldOpen = true;
     setActiveTab(tab);
@@ -527,7 +610,6 @@
 
   function closeField(){
     activeFieldOpen = false;
-    bufferInterim = "";
     $("activeFieldLabel").textContent = "—";
     setStatus(`Feld geschlossen. Sag <span class="mono">„Öffne …“</span> um zu diktieren.`);
     showToast("Feld geschlossen");
@@ -535,28 +617,29 @@
 
   function clearActiveField(){
     textareas[activeTab].value = "";
-    bufferInterim = "";
     updateFilledTabs();
+    persist();
     showToast(`${tabLabel(activeTab)} geleert`);
   }
 
   function clearAll(){
     Object.values(textareas).forEach(ta => ta.value = "");
-    bufferInterim = "";
     updateFilledTabs();
     closeField();
+    persist();
     showToast("Alles geleert");
   }
 
-  // tabs click (manual allowed)
   $("tabs").addEventListener("click", (e)=>{
     const t = e.target.closest(".tab");
     if(!t) return;
     setActiveTab(t.dataset.tab);
   });
 
-  // typing updates "filled"
-  Object.values(textareas).forEach(ta => ta.addEventListener("input", updateFilledTabs));
+  Object.values(textareas).forEach(ta => ta.addEventListener("input", ()=>{
+    updateFilledTabs();
+    persist();
+  }));
 
   // ---------- VOICE (Web Speech API) ----------
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -588,7 +671,7 @@
 
     rec.onstart = () => {
       setMic(true);
-      setStatus(`Listening ON. Sag z.B. <span class="mono">„Öffne Anamnese“</span>.`);
+      setStatus(`Listening ON. Sprich Kommandos oder öffne ein Feld zum Diktieren.`);
       showToast("Listening ON");
     };
 
@@ -599,12 +682,7 @@
     };
 
     rec.onend = () => {
-      // stays OFF unless restarted
       setMic(false);
-      bufferInterim = "";
-      if(activeFieldOpen) {
-        // leave current content
-      }
       setStatus(`Listening OFF.`);
     };
 
@@ -614,10 +692,10 @@
         const transcript = (res[0] && res[0].transcript ? res[0].transcript : "").trim();
         if(!transcript) continue;
 
-        // commands should NOT end up in textareas
         const t = normalize(transcript);
 
-        // --- commands
+        // ---------- COMMANDS (immer) ----------
+        // Open tab/field
         const mOpen = t.match(/^oeffne\s+(anamnese|befund|diagnose|therapieplan|therapie plan|verlauf|epikrise|notizen|notiz)\b/);
         if(mOpen){
           const v = mOpen[1];
@@ -633,37 +711,91 @@
           continue;
         }
 
-        if(t === "schliesse feld" || t === "feld schliessen" || t === "schliesse" || t === "schließe feld"){
+        // Close field
+        if(t === "schliesse feld" || t === "feld schliessen" || t === "schliesse" || t === "schliesse das feld" || t === "schließe feld"){
           closeField();
           continue;
         }
 
+        // Patient selection
+        // “Wähle Patient Max Muster” / “Patient Max Muster”
+        let mPatient = t.match(/^(waehle\s+)?patient\s+(.+)$/);
+        if(mPatient){
+          const q = mPatient[2];
+          const hit = findPatientByName(q);
+          if(hit){
+            selectPatientByIndex(hit.i);
+          } else {
+            showToast("Patient nicht gefunden");
+            setStatus(`⚠️ Patient nicht gefunden. Sag z.B. <span class="mono">„Wähle Patient Max Muster“</span>.`);
+          }
+          continue;
+        }
+        if(t === "naechster patient" || t === "naechste patientin" || t === "naechster"){
+          const idx = getSelectedPatientIndex();
+          const next = (idx < 0) ? 0 : Math.min(patients.length-1, idx+1);
+          selectPatientByIndex(next);
+          continue;
+        }
+        if(t === "vorheriger patient" || t === "vorherige patientin" || t === "zurueck patient" || t === "vorheriger"){
+          const idx = getSelectedPatientIndex();
+          const prev = (idx <= 0) ? 0 : idx-1;
+          selectPatientByIndex(prev);
+          continue;
+        }
+
+        // Session type
+        // “Sitzung Erstbefund” / “Sitzung Folgetermin”
+        const mSession = t.match(/^sitzung\s+(erstbefund|folgetermin|folge termin|followup|initial)\b/);
+        if(mSession){
+          const v = mSession[1];
+          const type = (v === "folgetermin" || v === "folge termin" || v === "followup") ? "followup" : "initial";
+          $("sessionType").value = type;
+          persist();
+          showToast(type === "initial" ? "Sitzung: Erstbefund" : "Sitzung: Folgetermin");
+          setStatus(`Sitzungstyp gesetzt: <b>${type === "initial" ? "Erstbefund" : "Folgetermin"}</b>`);
+          continue;
+        }
+
+        // Date
+        // “Datum heute/gestern/morgen”
+        const mDate = t.match(/^datum\s+(heute|gestern|morgen)\b/);
+        if(mDate){
+          const v = mDate[1];
+          $("sessionDate").value = v === "heute" ? todayISO() : (v === "gestern" ? shiftISO(-1) : shiftISO(1));
+          persist();
+          showToast(`Datum: ${$("sessionDate").value}`);
+          setStatus(`Datum gesetzt: <b>${$("sessionDate").value}</b>`);
+          continue;
+        }
+
+        // Actions
         if(t === "stop" || t === "stopp" || t === "stop listening" || t === "stopp listening"){
           stopListening();
           continue;
         }
-
         if(t === "leeren" || t === "feld leeren"){
           clearActiveField();
           continue;
         }
-
         if(t === "alles leeren" || t === "reset"){
           clearAll();
           continue;
         }
-
         if(t === "pdf" || t === "export pdf" || t === "pdf exportieren"){
           exportPdf();
           continue;
         }
-
+        if(t === "speichern" || t === "save" || t === "an theorg senden" || t === "senden"){
+          sendToTHEORG();
+          continue;
+        }
         if(t === "kopieren" || t === "copy"){
           copyActive();
           continue;
         }
 
-        // --- dictation (ONLY if field is open)
+        // ---------- DICTATION (nur wenn Feld offen) ----------
         if(!activeFieldOpen){
           if(res.isFinal){
             setStatus(`Ich höre, aber kein Feld ist offen. Sag <span class="mono">„Öffne …“</span>.`);
@@ -675,11 +807,9 @@
           const cur = (textareas[activeTab].value || "").trim();
           const next = (cur ? (cur + " ") : "") + transcript.trim();
           textareas[activeTab].value = next;
-          bufferInterim = "";
           textareas[activeTab].scrollTop = textareas[activeTab].scrollHeight;
           updateFilledTabs();
-        } else {
-          // optional: show interim by temporarily appending (kept simple: ignore interim to keep clean UI)
+          persist();
         }
       }
     };
@@ -697,7 +827,6 @@
     }
     rec = null;
     setMic(false);
-    bufferInterim = "";
     setStatus(`Listening OFF.`);
     showToast("Listening OFF");
   }
@@ -748,9 +877,6 @@
       setStatus(`Bitte zuerst einen Patienten auswählen.`);
       return;
     }
-
-    // Placeholder: here you would POST to your connector:
-    // fetch("/api/theorg/save", { method:"POST", headers:{...}, body: JSON.stringify(payload) })
     console.log("THEORG payload (mock):", payload);
     setStatus(`✅ Payload erstellt (Mock). In echter Integration würde jetzt an THEORG gesendet werden.`);
     showToast("An THEORG gesendet (Mock)");
@@ -831,6 +957,8 @@
   $("btnSave").addEventListener("click", sendToTHEORG);
 
   $("patientSelect").addEventListener("change", updatePatientMeta);
+  $("sessionType").addEventListener("change", persist);
+  $("sessionDate").addEventListener("change", persist);
 
   // keyboard shortcuts
   document.addEventListener("keydown", (e)=>{
@@ -846,16 +974,16 @@
 
   // ---------- INIT ----------
   renderPatients();
-  updatePatientMeta();
   $("sessionDate").value = todayISO();
   setActiveTab("anamnese");
   closeField();
+  restore();
 
   if(!supportsSpeech()){
     setStatus(`⚠️ SpeechRecognition nicht verfügbar. Bitte Chrome/Edge verwenden.`);
     showToast("SpeechRecognition nicht verfügbar");
   } else {
-    setStatus(`Bereit. Starte Listening, dann sag <span class="mono">„Öffne Anamnese“</span>.`);
+    setStatus(`Bereit. Starte Listening und steuere Patient/Sitzung/Tabs per Sprache.`);
   }
 </script>
 </body>
